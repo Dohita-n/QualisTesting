@@ -1,0 +1,48 @@
+<!-- Transformations List -->
+<div class="transformations-list">
+  <div *ngIf="transformations.length === 0" class="empty-state">
+    <p>No transformations have been added yet.</p>
+    <p class="hint">Add a transformation using the form above to start transforming your data.</p>
+  </div>
+  
+  <div *ngIf="transformations.length > 0" class="transformation-steps">
+    <div 
+      *ngFor="let step of transformations; let i = index" 
+      class="transformation-step"
+      [class.inactive]="!step.active"
+      [class.dragging]="i === draggedIndex"
+      draggable="true"
+      (dragstart)="onDragStart(i)"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop(i)"
+      (dragend)="onDragEnd()"
+    >
+      <div class="step-header">
+        <div class="step-index">{{ i + 1 }}</div>
+        <div class="step-title">
+          <span class="transformation-icon small" [attr.data-icon]="getTransformationIcon(step.transformationType)"></span>
+          {{ getTransformationName(step.transformationType) }}
+        </div>
+        <div class="step-actions">
+          <div class="toggle-switch">
+            <input 
+              type="checkbox" 
+              [id]="'toggle-' + step.id" 
+              [checked]="step.active"
+              (change)="toggleTransformationActive(step.id, $any($event.target).checked)"
+            >
+            <label [for]="'toggle-' + step.id"></label>
+          </div>
+          <button class="delete-button" (click)="onDeleteTransformation($event, step.id)" title="Delete transformation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="step-summary">
+        {{ getTransformationSummary(step) }}
+      </div>
+    </div>
+  </div>
+</div> 

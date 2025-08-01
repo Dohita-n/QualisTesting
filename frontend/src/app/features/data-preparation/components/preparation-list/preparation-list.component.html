@@ -1,0 +1,42 @@
+<div class="preparation-list">
+  <div *ngFor="let preparation of preparations" class="preparation-card" (click)="onSelect(preparation)">
+    <div class="preparation-header">
+      <div class="preparation-info">
+        <h3 class="preparation-name">{{ preparation.name }}</h3>
+        <span class="preparation-status" [ngClass]="getStatusClass(preparation.status)">
+          {{ preparation.status }}
+        </span>
+      </div>
+      <div class="preparation-actions">
+        <button class="btn btn-icon btn-danger" (click)="onDelete($event, preparation.id)" title="Delete preparation">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="preparation-details">
+      <div class="detail-item">
+        <span class="detail-label">Created</span>
+        <span class="detail-value">{{ formatDate(preparation.createdAt) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Modified</span>
+        <span class="detail-value">{{ formatDate(preparation.modifiedAt) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Dataset</span>
+        <span class="detail-value">{{ preparation.sourceDataset.name }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Steps</span>
+        <span class="detail-value">{{ preparation.transformationSteps.length }}</span>
+      </div>
+    </div>
+    
+    <div class="preparation-description" *ngIf="preparation.description">
+      <p>{{ preparation.description }}</p>
+    </div>
+  </div>
+</div> 

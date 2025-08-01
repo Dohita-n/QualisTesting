@@ -1,0 +1,17 @@
+table.editable-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.editable-table th,
+.editable-table td {
+  border: 1px solid #ccc;
+  padding: 6px;
+}
+
+.editable-table input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+}

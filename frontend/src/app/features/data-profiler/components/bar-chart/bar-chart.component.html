@@ -1,0 +1,14 @@
+<div class="chart-container" [style.height.px]="height">
+        <ng-container *ngIf="data && data.length > 0; else noData">
+            <div class="chart-bars">
+                <div *ngFor="let item of data" class="chart-bar">
+                    <div class="bar-value">{{ item.value }}</div>
+                    <div class="bar-fill" [style.height.%]="getBarHeight(item)"></div>
+                    <div class="bar-label">{{ item.name }}</div>
+                </div>
+            </div>
+        </ng-container>
+        <ng-template #noData>
+            <div class="no-data">No data available</div>
+        </ng-template>  
+</div>

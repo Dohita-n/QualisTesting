@@ -1,0 +1,14 @@
+<div class="skewness-container" [style.height.px]="height">
+    <div class="gauge">
+      <div class="gauge-arc"></div>
+      <div class="gauge-needle" [style.transform]="getNeedleRotation()"></div>
+    </div>
+    <div class="gauge-labels">
+      <div class="gauge-label left">Negative<br>Skew</div>
+      <div class="gauge-value">{{ skewness | number:'1.2-2' }}</div>
+      <div class="gauge-label right">Positive<br>Skew</div>
+    </div>
+    <div class="gauge-description">
+      {{ getSkewnessDescription() }}
+    </div>
+  </div>

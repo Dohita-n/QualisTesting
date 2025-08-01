@@ -1,0 +1,92 @@
+<div class="datasets-container">
+  <!-- PrimeNG Toast component for notifications -->
+  <p-toast></p-toast>
+  
+  <div class="section-header">
+    <div class="header-content">
+      <div class="title-container">
+        <h1 class="section-title">Datasets</h1>
+        <p class="section-subtitle">View and manage your datasets</p>
+      </div>
+      
+      <div class="search-filter-container">
+        <!-- Search bar -->
+        <div class="search-bar">
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            placeholder="Search datasets..." 
+            class="search-input"
+          />
+          <button *ngIf="searchQuery" (click)="clearFilters()" class="clear-button">×</button>
+        </div>
+        
+        <!-- Filter dropdown -->
+        <div class="filter-dropdown">
+          <select [(ngModel)]="activeFilter" (ngModelChange)="onFilterChange($event)" class="filter-select">
+            <option value="">Sort by</option>
+            <optgroup label="Row Count">
+              <option *ngFor="let option of filterOptions | slice:0:2" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Column Count">
+              <option *ngFor="let option of filterOptions | slice:2:4" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Date">
+              <option *ngFor="let option of filterOptions | slice:4:6" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Name">
+              <option *ngFor="let option of filterOptions | slice:6:8" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+          </select>
+          
+          <div *ngIf="activeFilter" class="active-filter">
+            <span>{{ getFilterLabel(activeFilter) }}</span>
+            <button (click)="activeFilter = ''" class="clear-filter">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filter feedback -->
+    <div *ngIf="isFilterLoading" class="filter-loading">
+      <span class="loading-spinner-small"></span>
+      <span>Applying filter...</span>
+    </div>
+  </div>
+
+  <!-- Datasets loading indicator -->
+  <div *ngIf="loadingDatasets" class="flex items-center justify-center p-6">
+    <app-loading-spinner message="Loading your datasets..."></app-loading-spinner>
+  </div>
+  
+  <!-- Datasets error message -->
+  <app-error-message 
+    *ngIf="datasetsError" 
+    [message]="datasetsError" 
+    (retry)="loadUserDatasets()"
+  ></app-error-message>
+  
+
+  
+  <!-- No results message -->
+  <app-empty-state 
+    *ngIf="!loadingDatasets && !datasetsError && userDatasets.length > 0 && filteredDatasets.length === 0"
+    title="No datasets match your search"
+    message="Try changing your search terms or clear filters to see all datasets."
+    actionText="Clear Filters"
+    (actionClick)="clearFilters()"
+    icon="search"
+  ></app-empty-state>
+  
+  <!-- Datasets grid -->
+  <div *ngIf="!loadingDatasets && !datasetsError && filteredDatasets.length > 0" class="datasets-grid">
+    <app-dataset-card 
+      *ngFor="let dataset of filteredDatasets"
+      [dataset]="dataset"
+      (view)="onViewDataset($event)"
+      (delete)="onDeleteDataset($event)"
+      (statistics)="onViewStatistics($event)"
+      (edit)="onEditDataset($event)"
+    ></app-dataset-card>
+  </div>
+</div> 

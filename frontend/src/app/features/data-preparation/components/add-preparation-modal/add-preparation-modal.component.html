@@ -1,0 +1,117 @@
+<div class="modal-backdrop" (click)="onClose()"></div>
+<div class="modal-container">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Add preparation</h2>
+      <button class="modal-close" (click)="onClose()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Preparation name input -->
+      <div class="form-group">
+        <label for="preparationName" class="form-label">Preparation name*</label>
+        <input 
+          type="text" 
+          id="preparationName" 
+          class="form-control" 
+          placeholder="Define the preparation name" 
+          [(ngModel)]="preparationName"
+        >
+      </div>
+      
+      <!-- Select a dataset section -->
+      <div class="form-group">
+        <label class="form-label">Select a dataset*</label>
+        
+        <!-- Dataset search -->
+        <div class="search-input">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            class="form-control search-field" 
+            placeholder="Find a dataset" 
+            [(ngModel)]="searchQuery"
+          >
+        </div>
+        
+        <!-- Datasets loading indicator -->
+        <div *ngIf="loading" class="loading-container">
+          <app-loading-spinner message="Loading datasets..."></app-loading-spinner>
+        </div>
+        
+        <!-- Datasets error message -->
+        <app-error-message 
+          *ngIf="error" 
+          [message]="error"
+        ></app-error-message>
+        
+        <!-- Datasets list -->
+        <div *ngIf="!loading && !error && datasets.length > 0" class="datasets-table">
+          <div class="table-header">
+            <div class="checkbox-cell"></div>
+            <div class="name-cell">Name</div>
+            <div class="quality-cell">Quality</div>
+            <div class="connection-cell">Connection</div>
+            <div class="engine-cell">Engine</div>
+            <div class="created-cell">Created</div>
+            <div class="updated-cell">Updated</div>
+          </div>
+          
+          <div *ngFor="let dataset of filteredDatasets" 
+               class="table-row" 
+               [class.selected]="selectedDatasetId === dataset.id"
+               (click)="selectDataset(dataset)">
+            <div class="checkbox-cell">
+              <div class="radio">
+                <input 
+                  type="radio" 
+                  [id]="'dataset-' + dataset.id" 
+                  name="selectedDataset" 
+                  [checked]="selectedDatasetId === dataset.id"
+                >
+                <label [for]="'dataset-' + dataset.id"></label>
+              </div>
+            </div>
+            <div class="name-cell">{{ dataset.name }}</div>
+            <div class="quality-cell">
+              <div class="quality-bar">
+                <div class="quality-fill"></div>
+              </div>
+            </div>
+            <div class="connection-cell">Local Connection</div>
+            <div class="engine-cell">Cloud Engine</div>
+            <div class="created-cell">{{ formatDate(dataset.createdAt) }}</div>
+            <div class="updated-cell">{{ formatDate(dataset.modifiedAt) }}</div>
+          </div>
+          
+          <!-- Empty state for no search results -->
+          <div *ngIf="searchQuery && filteredDatasets.length === 0" class="empty-search-results">
+            No datasets match your search
+          </div>
+        </div>
+        
+        <!-- No datasets message -->
+        <div *ngIf="!loading && !error && datasets.length === 0" class="no-datasets">
+          <p>You don't have any datasets available. Upload a file first.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Cancel</button>
+      <button 
+        class="btn btn-primary" 
+        [disabled]="!preparationName.trim() || !selectedDatasetId || loading" 
+        (click)="createPreparation()"
+      >
+        Submit
+      </button>
+    </div>
+  </div>
+</div> 

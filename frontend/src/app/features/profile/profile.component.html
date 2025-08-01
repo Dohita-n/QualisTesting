@@ -1,0 +1,23 @@
+<div class="profile-container">
+  <!-- Loading indicator -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading profile information...</p>
+  </div>
+
+  <!-- Content when loaded -->
+  <div *ngIf="!isLoading">
+    <!-- Profile info is always displayed -->
+    <app-profile-info />
+    
+    <!-- Admin-only components -->
+    <ng-container *ngIf="isAdmin">
+      <app-profiles-manage />
+    </ng-container>
+    
+    <ng-container *ngIf="isAdmin">
+      <app-profiles-assignments />
+    </ng-container>
+  </div>
+  
+</div>

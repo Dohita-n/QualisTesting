@@ -1,0 +1,99 @@
+<<<<<<< HEAD
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+=======
+# Global
+.DS_Store
+Thumbs.db
+*.log
+README0.md
+
+# Node / Angular frontend
+/frontend/node_modules/
+frontend/dist/
+frontend/.angular/cache/
+frontend/.vscode/
+frontend/.env
+frontend/.env.*.local
+
+# Vite build
+frontend/.vite
+
+# Angular specific
+frontend/.angular/
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Java / Spring Boot backend
+/server/target/
+server/.classpath
+server/.project
+server/.settings/
+server/HELP.md
+
+# Uploads
+/server/uploads/*
+
+# Maven
+server/logs/
+server/.mvn/
+server/mvnw
+server/mvnw.cmd
+
+# OS-specific
+ehthumbs.db
+Icon?
+*.swp
+
+# Environment files (optional)
+server/.env
+.env.local
+
+# Test reports (if generated)
+**/test-output/
+
+>>>>>>> 1d91c842f638ad1bb744670d23d48d0e719a25b8

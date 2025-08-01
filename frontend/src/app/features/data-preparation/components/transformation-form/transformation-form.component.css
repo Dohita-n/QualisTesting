@@ -1,0 +1,353 @@
+.transformation-form {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f8fafc;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  transition: border-color 0.2s;
+  background-color: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.error-text {
+  color: #e53e3e;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.help-text {
+  color: #718096;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-primary:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #cbd5e0;
+}
+
+/* Formula builder styles */
+.formula-builder {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.formula-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.formula-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.formula-operator {
+  min-width: 80px;
+  max-width: 120px;
+}
+
+.formula-add-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.formula-add-btn:hover {
+  background-color: #2563eb;
+}
+
+.spinner-sm {
+  display: inline-block;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 2px solid white;
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Transformations List Styles */
+.transformations-list {
+  margin-top: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  border: 1px dashed #d1d5db;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.transformation-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.transformation-step {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+  cursor: move;
+  transition: all 0.2s;
+}
+
+.transformation-step:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.transformation-step.dragging {
+  opacity: 0.5;
+  border: 1px dashed #3b82f6;
+}
+
+.transformation-step.inactive {
+  opacity: 0.6;
+  border-left: 3px solid #9ca3af;
+  background-color: #f3f4f6;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.step-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #e5e7eb;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.step-title {
+  font-weight: 600;
+  color: #1f2937;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+}
+
+.transformation-icon {
+  width: 24px;
+  height: 24px;
+  background-color: #e0f2fe;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0369a1;
+  position: relative;
+}
+
+.transformation-icon.small {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.transformation-icon[data-icon="filter"]::before {
+  content: "F";
+}
+
+.transformation-icon[data-icon="fill"]::before {
+  content: "N";
+}
+
+.transformation-icon[data-icon="rename"]::before {
+  content: "R";
+}
+
+.transformation-icon[data-icon="formula"]::before {
+  content: "C";
+}
+
+.transformation-icon[data-icon="drop"]::before {
+  content: "D";
+}
+
+.transformation-icon[data-icon="transform"]::before {
+  content: "T";
+}
+
+.step-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.toggle-switch {
+  position: relative;
+  height: 20px;
+  width: 36px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-switch label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  border-radius: 10px;
+  transition: .3s;
+  cursor: pointer;
+}
+
+.toggle-switch label:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #f9fafb;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+.toggle-switch input:checked + label {
+  background-color: #3b82f6;
+}
+
+.toggle-switch input:checked + label:before {
+  transform: translateX(16px);
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 0.25rem;
+  border: none;
+  background-color: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #fee2e2;
+}
+
+.step-summary {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: 2.5rem;
+} 

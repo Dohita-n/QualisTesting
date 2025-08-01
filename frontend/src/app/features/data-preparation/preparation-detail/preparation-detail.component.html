@@ -1,0 +1,145 @@
+<div class="preparation-detail-container">
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading preparation...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <i class="fa fa-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Main content -->
+  <div *ngIf="!isLoading && preparation" class="preparation-content">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <button class="back-btn" (click)="goBackToList()">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div class="title">
+          <h1>{{ preparation.name }}</h1>
+          <div class="preparation-meta">
+            <span class="status-badge" [ngClass]="'status-' + preparation.status.toLowerCase()">
+              {{ preparation.status }}
+            </span>
+            <span class="meta-date">Created: {{ formatDate(preparation.createdAt) }}</span>
+            <span class="meta-dataset">Dataset: {{ preparation.sourceDataset.name }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button 
+          class="execute-btn" 
+          [disabled]="isExecuting || preparation.status === 'PROCESSING'" 
+          (click)="executePreparation()"
+        >
+          <span *ngIf="isExecuting" class="spinner-sm"></span>
+          <i *ngIf="!isExecuting" class="fa fa-play"></i>
+          Execute Preparation
+        </button>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="description" *ngIf="preparation.description">
+      <p>{{ preparation.description }}</p>
+    </div>
+
+    <!-- Preview section -->
+    <div class="preview-section">
+      <div class="section-header">
+        <h2>Preview</h2>
+        <button class="refresh-btn" (click)="loadPreview()" [disabled]="isPreviewLoading">
+          <span *ngIf="isPreviewLoading" class="spinner-sm"></span>
+          <i *ngIf="!isPreviewLoading" class="fa fa-refresh"></i>
+          Refresh Preview
+        </button>
+      </div>
+
+      <!-- Preview loading -->
+      <div *ngIf="isPreviewLoading" class="preview-loading">
+        <div class="spinner"></div>
+        <p>Loading preview...</p>
+      </div>
+
+      <!-- Preview data -->
+      <div *ngIf="!isPreviewLoading && previewData" class="preview-data">
+        <div class="preview-table-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th *ngFor="let header of previewData.headers">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of previewData.data">
+                <td *ngFor="let header of previewData.headers">
+                  {{ row[header] !== null ? row[header] : 'NULL' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- No preview data -->
+      <div *ngIf="!isPreviewLoading && (!previewData || previewData.data.length === 0)" class="no-preview">
+        <i class="fa fa-table"></i>
+        <p>No preview data available. Add transformations and refresh to see a preview.</p>
+      </div>
+    </div>
+
+    <!-- Transformations section -->
+    <div class="transformations-section">
+      <div class="section-header">
+        <h2>Transformations</h2>
+        <div class="transformation-type-selector">
+          <div class="dropdown">
+            <button class="dropdown-toggle">
+              <i class="fa fa-plus"></i> Add Transformation
+            </button>
+            <div class="dropdown-menu">
+              <button 
+                *ngFor="let type of transformationTypes" 
+                class="dropdown-item" 
+                (click)="selectTransformationType(type.value)"
+              >
+                {{ type.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transformation form for adding new transformations -->
+      <div *ngIf="showTransformationForm" class="transformation-form-container">
+        <h3>Add {{ getTransformationTypeLabel(selectedTransformationType) }}</h3>
+        <app-transformation-form
+          [transformationType]="selectedTransformationType"
+          [columns]="preparation.sourceDataset.columns || []"
+          (applyTransformation)="applyTransformation($event)"
+          (cancel)="cancelTransformation()"
+        ></app-transformation-form>
+      </div> 
+
+      <!-- Transformations list displayed when not adding a new transformation -->
+      <div *ngIf="!showTransformationForm && preparation.transformationSteps.length > 0">
+        <app-transformations-list
+          [transformations]="preparation.transformationSteps"
+          (updateTransformation)="toggleTransformationStep($event.stepId, !$event.changes.active)"
+          (deleteTransformation)="deleteTransformationStep($event)"
+          (reorderTransformations)="reorderTransformationSteps($event)"
+        ></app-transformations-list>
+      </div> 
+
+      <!-- No transformations message -->
+      <div *ngIf="preparation.transformationSteps.length === 0" class="no-transformations">
+        <i class="fa fa-info-circle"></i>
+        <p>No transformation steps have been added yet. Add a transformation to start preparing your data.</p>
+      </div>
+    </div>
+  </div>
+</div> 

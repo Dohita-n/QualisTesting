@@ -1,0 +1,91 @@
+<div class="p-card mt-6">
+  <!-- Notifications -->
+  <p-toast></p-toast>
+
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog>
+    <ng-template #message let-message>
+      <div class="flex flex-col items-center w-full gap-4 border-b border-surface-200 dark:border-surface-700">
+        <i [ngClass]="message.icon" class="!text-6xl text-primary-500"></i>
+        <p>{{ message.message }}</p>
+      </div>
+    </ng-template>
+  </p-confirmDialog>
+
+  <div class="p-inputgroup mb-3 flex justify-content-end">
+    <input type="text" pInputText [(ngModel)]="searchValue" placeholder="Search for profiles" (input)="onFilter()" />
+    <p-button label="Add Profile" icon="pi pi-plus" (click)="openProfileDialog()" styleClass="p-button-success"></p-button>
+  </div>
+
+  <p-table #dt [value]="profiles" [paginator]="true" [rows]="5" [loading]="loading" [globalFilterFields]="['name', 'roles']" [filterDelay]="0" [rowsPerPageOptions]="[5, 10, 20]" [tableStyle]="{ 'min-width': '5rem' }" stateStorage="session" stateKey="profile-table-session">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="name" style="width:40%">Profile <p-sortIcon field="name"></p-sortIcon></th>
+        <th pSortableColumn="roles" style="width:40%">Roles <p-sortIcon field="roles"></p-sortIcon></th>
+        <th style="width:20%">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-profile>
+      <tr [pSelectableRow]="profile">
+        <td>{{ profile.name }}</td>
+        <td>
+          <span *ngFor="let role of profile.roles; let i = index">
+            <p-tag [value]="role" [severity]="getRoleSeverity(role)" [styleClass]="'role-tag-' + getRoleSeverity(role)" [style]="{'margin-right': '5px'}"></p-tag>
+          </span>
+        </td>
+        <td>
+          <p-button icon="pi pi-pencil" [rounded]="true" (click)="editProfile(profile)" [text]="true" severity="info"></p-button>
+          <p-button icon="pi pi-trash" [rounded]="true" (click)="confirmDelete(profile)" [text]="true" severity="danger"></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3">No profiles found.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Dialog for Add/Edit Profile -->
+<p-dialog 
+  [header]="isEditMode ? 'Edit Profile' : 'Add New Profile'" 
+  [(visible)]="showProfileDialog" 
+  [modal]="true" 
+  [style]="{width: '400px'}" 
+  [contentStyle]="{ 'min-height': '400px', 'overflow': 'hidden' }">
+  <div class="p-fluid p-grid">
+    <!-- Basic Information Section -->
+    <div class="p-col-12 p-field">
+      <label for="name" class="p-mb-2">Profile Name</label>
+      <input id="name" type="text" pInputText [(ngModel)]="newProfile.name" class="p-inputtext w-full" (ngModelChange)="onProfileFormChange()" />
+    </div>
+
+    <div class="p-col-12 p-field">
+      <label for="description" class="p-mb-2">Description</label>
+      <textarea id="description" rows="3" pInputTextarea [(ngModel)]="newProfile.description" class="p-inputtext w-full" (ngModelChange)="onProfileFormChange()"></textarea>
+    </div>
+
+    <!-- Roles Section -->
+    <div class="p-col-12 p-field">
+      <label for="roles" class="p-mb-2">Roles</label>
+      <p-multiselect 
+        id="roles" 
+        [options]="availableRoles" 
+        [(ngModel)]="newProfile.roleIds" 
+        optionLabel="label" 
+        optionValue="value" 
+        placeholder="Select roles" 
+        [maxSelectedLabels]="3" 
+        class="w-full" 
+        (onChange)="onRolesSelected($event)"
+        required>
+      </p-multiselect>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text" (click)="showProfileDialog = false"></p-button>
+    <p-button label="Save" icon="pi pi-check" styleClass="p-button-success" (click)="confirm()" [disabled]="isEditMode && !formChanged"></p-button>
+  </ng-template>
+</p-dialog>

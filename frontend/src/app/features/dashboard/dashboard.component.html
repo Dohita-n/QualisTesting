@@ -1,0 +1,269 @@
+<div class="dashboard-container">
+   <!-- PrimeNG Toast component for notifications -->
+  <p-toast></p-toast>
+    <div class="section-header">
+    <div class="header-content">
+      <div class="title-container">
+        <h1 class="section-title">Datasets</h1>
+        <p class="section-subtitle">Upload and manage your datasets</p>
+      </div>
+      
+      <div class="search-filter-container">
+        <!-- Search bar -->
+        <div class="search-bar">
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            placeholder="Search datasets..." 
+            class="search-input"
+          />
+          <button *ngIf="searchQuery" (click)="clearFilters()" class="clear-button">×</button>
+        </div>
+        
+        <!-- Filter dropdown -->
+        <div class="filter-dropdown">
+          <select [(ngModel)]="activeFilter" (ngModelChange)="onFilterChange($event)" class="filter-select">
+            <option value="">Sort by</option>
+            <optgroup label="Row Count">
+              <option *ngFor="let option of filterOptions | slice:0:2" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Column Count">
+              <option *ngFor="let option of filterOptions | slice:2:4" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Date">
+              <option *ngFor="let option of filterOptions | slice:4:6" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+            <optgroup label="Name">
+              <option *ngFor="let option of filterOptions | slice:6:8" [value]="option.value">{{ option.label }}</option>
+            </optgroup>
+          </select>
+          
+          <div *ngIf="activeFilter" class="active-filter">
+            <span>{{ getFilterLabel(activeFilter) }}</span>
+            <button (click)="activeFilter = ''" class="clear-filter">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  <div *ngIf="loadingState.filter" class="filter-loading">
+  <span class="loading-spinner-small"></span>
+  <span>Applying filter...</span>
+</div>
+  </div>
+  <!-- Error message display -->
+  <div *ngIf="errorMessage" class="error-message">
+    <div class="icon-wrapper">
+      <svg *ngIf="!errorMessage.includes('Retrying')" width="16" height="16" class="mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <svg *ngIf="errorMessage.includes('Retrying')" width="16" height="16" class="mr-2 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <!-- File Upload Section -->
+  <div *ngIf="authService.hasRole('UPLOAD_DATA') || authService.hasRole('ADMIN'); else noUploadPermission" class="card">
+    <h2 class="card-header">Upload Data</h2>
+    
+    <!-- Processing status indicator -->
+    <div *ngIf="processingStatus !== 'WAITING'" 
+         class="status-indicator"
+         [ngClass]="{
+           'status-processing': processingStatus === 'PROCESSING',
+           'status-complete': processingStatus === 'COMPLETE',
+           'status-error': processingStatus === 'ERROR'
+         }">
+      <div class="icon-wrapper">
+        <!-- Processing spinner -->
+        <svg *ngIf="processingStatus === 'PROCESSING'" class="status-icon spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <!-- Success check -->
+        <svg *ngIf="processingStatus === 'COMPLETE'" class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <!-- Error icon -->
+        <svg *ngIf="processingStatus === 'ERROR'" class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span 
+          [ngClass]="{
+            'status-text-processing': processingStatus === 'PROCESSING',
+            'status-text-complete': processingStatus === 'COMPLETE',
+            'status-text-error': processingStatus === 'ERROR'
+          }">
+          {{ processingMessage }}
+        </span>
+      </div>
+      
+      <!-- Processing steps indicator -->
+      <div *ngIf="processingStatus === 'PROCESSING'" class="step-indicator">
+        <div class="icon-wrapper">
+          <span class="step-icon" [ngClass]="{'step-icon-active': uploadProgress === 100, 'step-icon-inactive': uploadProgress < 100}"></span>
+          <span [ngClass]="{'step-text-active': uploadProgress === 100}">File upload {{ uploadProgress === 100 ? 'complete' : 'in progress' }}</span>
+        </div>
+        <div class="icon-wrapper">
+          <span class="step-icon" [ngClass]="{'step-icon-active': uploadProgress === 100 && isLoading, 'step-icon-inactive': uploadProgress < 100 || !isLoading}"></span>
+          <span [ngClass]="{'step-text-active': uploadProgress === 100 && isLoading}">Server processing {{ uploadProgress === 100 && isLoading ? 'in progress' : 'pending' }}</span>
+        </div>
+        <div class="icon-wrapper">
+          <span class="step-icon step-icon-inactive"></span>
+          <span>Data preview preparation</span>
+        </div>
+      </div>
+      
+      <!-- If error, show retry information -->
+      <div *ngIf="processingStatus === 'ERROR' && retryCount > 0" class="retry-info">
+        Retry attempts: {{ retryCount }}/{{ maxRetries }}
+      </div>
+    </div>
+    
+    <!-- Drag and drop area -->
+    <div 
+      class="file-drop-zone"
+      [ngClass]="{
+        'file-drop-zone-active': isDragOver,
+        'file-drop-zone-inactive': !isDragOver,
+        'file-drop-zone-disabled': isUploading || isLoading
+      }"
+      (dragover)="onDragOver($event)" 
+      (dragleave)="onDragLeave($event)" 
+      (drop)="onDrop($event)"
+      (click)="!isUploading && !isLoading && fileInput.click()"
+    >
+      <div class="upload-content">
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4B83F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+          <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <div class="upload-text">
+          <span>Drag and drop your file here or <span class="browse-link">browse</span></span>
+          <span class="supported-files">Supported files: CSV, Excel (.xlsx, .xls)</span>
+        </div>
+      </div>
+      <input #fileInput type="file" class="hidden" (change)="onFileSelected($event)" accept=".csv,.xlsx,.xls">
+    </div>
+    
+    <!-- Selected file info -->
+    <div *ngIf="selectedFile" class="file-info-container">
+      <div class="flex justify-between items-center flex-wrap">
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" class="mr-3" fill="none" viewBox="0 0 24 24" stroke="#3b82f6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <div>
+            <p class="font-medium text-gray-800">{{ selectedFile.name }}</p>
+            <p class="text-sm text-gray-500">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+          </div>
+        </div>
+        <div class="flex items-center mt-3 sm:mt-0 space-x-2">
+          <button 
+            class="btn btn-secondary"
+            [ngClass]="{'btn-disabled': isUploading || isLoading}"
+            (click)="cancelUpload()"
+            [disabled]="isUploading || isLoading"
+          >
+            <span>Cancel</span>
+          </button>
+          <button 
+            class="btn btn-primary"
+            [ngClass]="{'btn-disabled': isUploading || isLoading}"
+            (click)="uploadFile()"
+            [disabled]="isUploading || isLoading"
+          >
+            <span *ngIf="!isUploading && !isLoading">Upload</span>
+            <span *ngIf="isUploading || isLoading" class="flex items-center">
+              <svg class="spin mr-2" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Upload/Processing progress -->
+      <div *ngIf="isUploading || isLoading" class="mt-3">
+        <div class="progress-container">
+          <div *ngIf="isUploading" class="progress-bar progress-uploading" [style.width.%]="uploadProgress"></div>
+          <div *ngIf="!isUploading && isLoading" class="progress-bar progress-processing"></div>
+        </div>
+        <div class="flex justify-between mt-1">
+          <p class="text-xs text-gray-500">
+            <span *ngIf="isUploading">Uploading: {{ uploadProgress }}%</span>
+            <span *ngIf="!isUploading && isLoading">Processing data...</span>
+          </p>
+          <p class="text-xs text-gray-500">
+            <span *ngIf="selectedFile.size > 20 * 1024 * 1024">Using chunked upload for large file</span>
+            <span *ngIf="selectedFile.size <= 20 * 1024 * 1024">Standard upload</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Your Datasets Section -->
+    <div class="mt-8">
+      <div class="datasets-header">
+        <h2 class="card-header">Your Datasets</h2>
+      </div>
+      
+      <!-- Datasets loading indicator -->
+      <div *ngIf="loadingDatasets" class="flex items-center justify-center p-6">
+        <app-loading-spinner message="Loading your datasets..."></app-loading-spinner>
+      </div>
+      
+      <!-- Datasets error message -->
+      <app-error-message 
+        *ngIf="datasetsError" 
+        [message]="datasetsError" 
+        (retry)="loadUserDatasets()"
+      ></app-error-message>
+      
+      <!-- No datasets message -->
+      <app-empty-state 
+        *ngIf="!loadingDatasets && !datasetsError && userDatasets.length === 0"
+        title="You don't have any datasets yet"
+        message="Upload a file to create your first dataset."
+        icon="document"
+      ></app-empty-state>
+      
+      <!-- No results message -->
+      <app-empty-state 
+        *ngIf="!loadingDatasets && !datasetsError && userDatasets.length > 0 && filteredDatasets.length === 0"
+        title="No datasets match your search"
+        message="Try changing your search terms or clear filters to see all datasets."
+        actionText="Clear Filters"
+        (actionClick)="clearFilters()"
+        icon="search"
+      ></app-empty-state>
+      <div *ngIf="!loadingDatasets && !datasetsError && filteredDatasets.length > 0" class="datasets-grid">
+        <app-dataset-card 
+          *ngFor="let dataset of filteredDatasets"
+          [dataset]="dataset"
+          (view)="onViewDataset($event)"
+          (delete)="onDeleteDataset($event)"
+          (statistics)="onViewStatistics($event)"
+          (edit)="onEditDataset($event)"
+        ></app-dataset-card>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- No Upload Permission Message -->
+  <ng-template #noUploadPermission>
+    <div class="card">
+      <h2 class="card-header">Upload Data</h2>
+      <div class="permission-message">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <h3>Permission Required</h3>
+        <p>You don't have permission to upload data. Please contact your administrator if you need this access.</p>
+      </div>
+    </div>
+  </ng-template>
+</div>

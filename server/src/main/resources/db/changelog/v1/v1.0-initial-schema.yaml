@@ -1,0 +1,850 @@
+databaseChangeLog:
+  - changeSet:
+      id: enable-pgcrypto
+      author: you
+      changes:
+        - sql:
+            splitStatements: false
+            sql: CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+  - changeSet:
+      id: 1
+      author: vernical
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed : gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: avatar_url
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: account_non_expired
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_non_locked
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: credentials_non_expired
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enabled
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_attempt_count
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_failed_attempt
+                  type: timestamp
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: profiles
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createTable:
+            tableName: user_profile
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_user_profile_user
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: profile_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_user_profile_profile
+                    references: profiles(id)
+                    deleteCascade: true
+              - column:
+                  name: assigned_by
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_user_profile_assigned_by
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: assigned_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createTable:
+            tableName: profile_role
+            columns:
+              - column:
+                  name: profile_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_profile_role_profile
+                    references: profiles(id)
+                    deleteCascade: true
+              - column:
+                  name: role_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_profile_role_role
+                    references: roles(id)
+                    deleteCascade: true
+
+        - createTable:
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_refresh_token_user
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: expiry_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ip_address
+                  type: varchar(45)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: user_agent
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+        - createTable:
+            tableName: files
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_files_users
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: original_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stored_path
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: size
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: upload_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: virus_scan_status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: schema_valid
+                  type: boolean
+              - column:
+                  name: job_id
+                  type: varchar(255)
+
+        - createTable:
+            tableName: datasets
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: file_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_datasets_files
+                    references: files(id)
+                    deleteCascade: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: dataset_columns
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_columns_datasets
+                    references: datasets(id)
+                    deleteCascade: true
+              - column:
+                  name: name
+                  type: text
+                  remarks: "Changed from varchar(255) to text to support longer column names"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: inferred_data_type
+                  type: varchar(50)
+              - column:
+                  name: is_nullable
+                  type: boolean
+              - column:
+                  name: uniqueness
+                  type: boolean
+              - column:
+                  name: format
+                  type: varchar(255)
+              - column:
+                  name: decimal_precision
+                  type: integer
+                  remarks: "For DECIMAL data type, precision (total number of digits)"
+              - column:
+                  name: decimal_scale
+                  type: integer
+                  remarks: "For DECIMAL data type, scale (number of digits to the right of decimal point)"
+
+        - createTable:
+            tableName: dataset_rows
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_rows_datasets
+                    references: datasets(id)
+                    deleteCascade: true
+              - column:
+                  name: row_number
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: jsonb
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: dataset_column_statistics
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: dataset_column_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_stats_columns
+                    references: dataset_columns(id)
+                    deleteCascade: true
+              - column:
+                  name: null_count
+                  type: bigint
+              - column:
+                  name: unique_count
+                  type: bigint
+              - column:
+                  name: min_value
+                  type: varchar(255)
+              - column:
+                  name: max_value
+                  type: varchar(255)
+              - column:
+                  name: mean
+                  type: double precision
+              - column:
+                  name: median
+                  type: double precision
+              - column:
+                  name: std_dev
+                  type: double precision
+              - column:
+                  name: frequent_values
+                  type: jsonb
+                  remarks: "Stores the most frequent values and their counts"
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_updated
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        # Data Preparation feature tables
+        - createTable:
+            tableName: preparations
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: source_dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_prep_source_dataset
+                    references: datasets(id)
+                    deleteCascade: true
+              - column:
+                  name: output_dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_prep_output_dataset
+                    references: datasets(id)
+              - column:
+                  name: created_by
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_prep_created_by
+                    references: users(id)
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(32)
+                  defaultValue: "DRAFT"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_executed_at
+                  type: timestamp with time zone
+
+        - createTable:
+            tableName: transformation_steps
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_xforms_datasets
+                    references: datasets(id)
+                    deleteCascade: true
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_xforms_users
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: transformation_type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parameters
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: applied_at
+                  type: timestamp
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: previous_step_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_xforms_previous
+                    references: transformation_steps(id)
+                    deleteCascade: true
+              - column:
+                  name: preparation_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_xforms_preparation
+                    references: preparations(id)
+                    deleteCascade: true
+              - column:
+                  name: sequence_order
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  remarks: "Whether this transformation step is enabled"
+
+        - createTable:
+            tableName: job_metadata
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: file_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_job_metadata_file
+                    references: files(id)
+                    deleteCascade: true
+              - column:
+                  name: spring_batch_job_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: timestamp
+                  constraints:
+                    nullable: true
+              - column:
+                  name: metrics
+                  type: jsonb
+                  constraints:
+                    nullable: true
+
+        - createTable:
+            tableName: export_history
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_exports_users
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: dataset_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_exports_datasets
+                    references: datasets(id)
+                    deleteCascade: true
+              - column:
+                  name: export_format
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: export_path
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: exported_at
+                  type: timestamp
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        # Add all indexes
+        - createIndex:
+            tableName: user_profile
+            indexName: idx_user_profile_user
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: user_profile
+            indexName: idx_user_profile_profile
+            columns:
+              - column:
+                  name: profile_id
+
+        - createIndex:
+            tableName: profile_role
+            indexName: idx_profile_role_profile
+            columns:
+              - column:
+                  name: profile_id
+
+        - createIndex:
+            tableName: profile_role
+            indexName: idx_profile_role_role
+            columns:
+              - column:
+                  name: role_id
+
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_dataset_rows_data_gin
+              ON dataset_rows USING GIN (data);
+
+        - createIndex:
+            tableName: dataset_rows
+            indexName: idx_dataset_rows_dataset_id
+            columns:
+              - column:
+                  name: dataset_id
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_username
+            unique: true
+            columns:
+              - column:
+                  name: username
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_email
+            unique: true
+            columns:
+              - column:
+                  name: email
+
+        - createIndex:
+            tableName: files
+            indexName: idx_files_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: transformation_steps
+            indexName: idx_xforms_dataset_id
+            columns:
+              - column:
+                  name: dataset_id
+
+        - createIndex:
+            tableName: job_metadata
+            indexName: idx_job_metadata_file
+            columns:
+              - column:
+                  name: file_id
+
+        - createIndex:
+            tableName: job_metadata
+            indexName: idx_job_metadata_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            indexName: idx_refresh_token
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: token
+            unique: true
+
+        - createIndex:
+            indexName: idx_refresh_token_user
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: user_id
+                  
+        # Indexes for Data Preparation tables
+        - createIndex:
+            tableName: preparations
+            indexName: idx_preparations_source_dataset
+            columns:
+              - column:
+                  name: source_dataset_id
+                  
+        - createIndex:
+            tableName: preparations
+            indexName: idx_preparations_created_by
+            columns:
+              - column:
+                  name: created_by
+                  
+        - createIndex:
+            tableName: preparations
+            indexName: idx_preparations_output_dataset
+            columns:
+              - column:
+                  name: output_dataset_id
+                  
+        - createIndex:
+            tableName: transformation_steps
+            indexName: idx_xforms_preparation_id
+            columns:
+              - column:
+                  name: preparation_id
+                  
+        - createIndex:
+            tableName: transformation_steps
+            indexName: idx_xforms_sequence
+            columns:
+              - column:
+                  name: preparation_id
+              - column:
+                  name: sequence_order

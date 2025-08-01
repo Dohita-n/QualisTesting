@@ -1,0 +1,54 @@
+# Global
+.DS_Store
+Thumbs.db
+*.log
+README0.md
+
+# Node / Angular frontend
+/frontend/node_modules/
+frontend/dist/
+frontend/.angular/cache/
+frontend/.vscode/
+frontend/.env
+frontend/.env.*.local
+
+# Vite build
+frontend/.vite
+
+# Angular specific
+frontend/.angular/
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Java / Spring Boot backend
+/server/target/
+server/.classpath
+server/.project
+server/.settings/
+server/HELP.md
+
+# Uploads
+/server/uploads/*
+
+# Maven
+server/logs/
+server/.mvn/
+server/mvnw
+server/mvnw.cmd
+
+# OS-specific
+ehthumbs.db
+Icon?
+*.swp
+
+# Environment files (optional)
+server/.env
+.env.local
+
+# Test reports (if generated)
+**/test-output/
+

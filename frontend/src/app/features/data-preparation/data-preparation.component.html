@@ -1,0 +1,109 @@
+<div class="data-preparation-container">
+  <div class="header">
+    <h1>Data Preparation</h1>
+    <button class="add-btn" (click)="openAddModal()">
+      <i class="fa fa-plus"></i> Add Preparation
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading preparations...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!isLoading && preparations.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i class="fa fa-file-text-o"></i>
+    </div>
+    <h2>No Preparations Found</h2>
+    <p>Create a new preparation to transform and clean your datasets.</p>
+    <button class="btn-primary" (click)="openAddModal()">
+      Create Your First Preparation
+    </button>
+  </div>
+
+  <!-- Preparations list -->
+  <div *ngIf="!isLoading && preparations.length > 0" class="preparations-grid">
+    <app-preparation-list 
+      [preparations]="preparations"
+      (preparationSelected)="viewPreparation($event.id)"
+      (preparationDeleted)="handlePreparationDelete($event)"
+    ></app-preparation-list>
+  </div>
+
+  <!-- Add Preparation Modal -->
+  <div *ngIf="isAddModalOpen" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Add New Preparation</h2>
+        <button class="close-btn" (click)="closeAddModal()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="preparationForm" (ngSubmit)="submitForm()">
+          <div class="form-group">
+            <label for="name">Preparation Name</label>
+            <input 
+              type="text" 
+              id="name" 
+              formControlName="name" 
+              placeholder="Enter preparation name" 
+              [ngClass]="{'error': preparationForm.get('name')?.invalid && preparationForm.get('name')?.touched}"
+            >
+            <div *ngIf="preparationForm.get('name')?.invalid && preparationForm.get('name')?.touched" class="error-text">
+              <span *ngIf="preparationForm.get('name')?.errors?.['required']">Name is required</span>
+              <span *ngIf="preparationForm.get('name')?.errors?.['maxlength']">Name must be less than 100 characters</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description (Optional)</label>
+            <textarea 
+              id="description" 
+              formControlName="description" 
+              placeholder="Enter preparation description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="datasetId">Select Dataset</label>
+            <select 
+              id="datasetId" 
+              formControlName="datasetId"
+              [ngClass]="{'error': preparationForm.get('datasetId')?.invalid && preparationForm.get('datasetId')?.touched}"
+            >
+              <option value="" disabled>-- Select a dataset --</option>
+              <option *ngFor="let dataset of datasets" [value]="dataset.id">
+                {{ dataset.name }} ({{ dataset.rowCount }} rows, {{ dataset.columnCount }} columns)
+              </option>
+            </select>
+            <div *ngIf="preparationForm.get('datasetId')?.invalid && preparationForm.get('datasetId')?.touched" class="error-text">
+              Please select a dataset
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+            <button 
+              type="submit" 
+              class="btn-primary" 
+              [disabled]="preparationForm.invalid || isSubmitting"
+            >
+              <span *ngIf="isSubmitting" class="spinner-sm"></span>
+              Create Preparation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

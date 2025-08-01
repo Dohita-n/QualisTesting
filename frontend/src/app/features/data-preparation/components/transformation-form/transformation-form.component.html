@@ -1,0 +1,117 @@
+<div class="transformation-form">
+  <form [formGroup]="transformationForm" (ngSubmit)="onSubmit()">
+    <!-- Common column selection -->
+    <div class="form-group" *ngIf="transformationType !== 'COLUMN_FORMULA'">
+      <label for="columnId">Select Column</label>
+      <select id="columnId" formControlName="columnId" (change)="onColumnChange()">
+        <option value="">-- Select a column --</option>
+        <option *ngFor="let column of columns" [value]="column.id">
+          {{ column.name }} ({{ column.dataType }})
+        </option>
+      </select>
+      <div class="error-text" *ngIf="transformationForm.get('columnId')?.invalid && transformationForm.get('columnId')?.touched">
+        Please select a column
+      </div>
+    </div>
+
+    <!-- FILTER_ROWS transformation -->
+    <div *ngIf="transformationType === 'FILTER_ROWS'">
+      <div class="form-group">
+        <label for="operator">Filter Operator</label>
+        <select id="operator" formControlName="operator">
+          <option *ngFor="let op of filterOperators" [value]="op.value">{{ op.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="transformationForm.get('operator')?.value !== 'is_null' && transformationForm.get('operator')?.value !== 'not_null'">
+        <label for="value">Filter Value</label>
+        <input type="text" id="value" formControlName="value" placeholder="Enter value to filter by">
+        <div class="error-text" *ngIf="transformationForm.get('value')?.invalid && transformationForm.get('value')?.touched && isFieldRequired('value')">
+          Filter value is required
+        </div>
+      </div>
+    </div>
+
+    <!-- FILL_NULL transformation -->
+    <div *ngIf="transformationType === 'FILL_NULL'">
+      <div class="form-group">
+        <label for="fillMode">Fill Mode</label>
+        <select id="fillMode" formControlName="fillMode">
+          <option *ngFor="let mode of fillModes" [value]="mode.value">{{ mode.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="transformationForm.get('fillMode')?.value === 'value'">
+        <label for="fillValue">Fill Value</label>
+        <input type="text" id="fillValue" formControlName="fillValue" placeholder="Enter value to fill nulls with">
+        <div class="error-text" *ngIf="transformationForm.get('fillValue')?.invalid && transformationForm.get('fillValue')?.touched && isFieldRequired('fillValue')">
+          Fill value is required
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMN_RENAME transformation -->
+    <div *ngIf="transformationType === 'COLUMN_RENAME'">
+      <div class="form-group">
+        <label for="newName">New Column Name</label>
+        <input type="text" id="newName" formControlName="newName" placeholder="Enter new column name">
+        <div class="error-text" *ngIf="transformationForm.get('newName')?.invalid && transformationForm.get('newName')?.touched">
+          New column name is required
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMN_DROP transformation has no additional parameters -->
+
+    <!-- COLUMN_FORMULA transformation -->
+    <div *ngIf="transformationType === 'COLUMN_FORMULA'">
+      <div class="formula-builder">
+        <div class="form-group">
+          <label>Build Formula</label>
+          <div class="formula-inputs">
+            <select formControlName="selectedColumn" class="formula-input">
+              <option value="">-- Select column --</option>
+              <option *ngFor="let column of columns" [value]="column.id">{{ column.name }}</option>
+            </select>
+            
+            <select formControlName="selectedOperator" class="formula-input formula-operator">
+              <option *ngFor="let op of formulaOperators" [value]="op.value">{{ op.label }}</option>
+            </select>
+            
+            <input type="text" formControlName="operandValue" placeholder="Enter value" class="formula-input">
+            
+            <button type="button" class="formula-add-btn" (click)="updateFormula()">
+              <i class="fa fa-plus"></i> Add
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="formula">Formula</label>
+          <input type="text" id="formula" formControlName="formula" placeholder="e.g. column_name * 1.78">
+          <div class="help-text">Use column names and basic operators (+, -, *, /) to create a formula</div>
+          <div class="error-text" *ngIf="transformationForm.get('formula')?.invalid && transformationForm.get('formula')?.touched">
+            Formula is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="outputColumn">Output Column Name</label>
+          <input type="text" id="outputColumn" formControlName="outputColumn" placeholder="Enter name for the result column">
+          <div class="error-text" *ngIf="transformationForm.get('outputColumn')?.invalid && transformationForm.get('outputColumn')?.touched">
+            Output column name is required
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="onCancel()">Cancel</button>
+      <button type="submit" class="btn-primary" [disabled]="transformationForm.invalid">
+        <span *ngIf="isLoading" class="spinner-sm"></span>
+        Apply Transformation
+      </button>
+    </div>
+  </form>
+</div>
+

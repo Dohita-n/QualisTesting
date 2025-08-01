@@ -1,0 +1,79 @@
+<div class="dataset-card" (click)="view.emit(dataset)">
+  <div class="dataset-header">
+    <div class="dataset-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#3b82f6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    </div>
+    <div class="dataset-info">
+      <div *ngIf="isEditing" class="edit-name-container" (click)="$event.stopPropagation()">
+        <input 
+          type="text" 
+          [(ngModel)]="editedName" 
+          class="edit-name-input"
+          placeholder="Enter dataset name" 
+          (keyup.enter)="saveEdit($event)"
+          (keyup.escape)="cancelEdit($event)"
+          autofocus
+        >
+        <div class="edit-actions">
+          <button class="edit-btn save-btn" (click)="saveEdit($event)" title="Save">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+          <button class="edit-btn cancel-btn" (click)="cancelEdit($event)" title="Cancel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div *ngIf="!isEditing" class="dataset-name-container">
+      <h3 class="dataset-name">{{ dataset.name }}</h3>
+        <button *ngIf="hasEditPermission()" class="edit-name-btn" (click)="startEditing($event)" title="Edit name">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+      </div>
+      <span class="dataset-status" [ngClass]="{
+        'status-complete': dataset.status === 'COMPLETE',
+        'status-processing': dataset.status === 'PROCESSING',
+        'status-error': dataset.status === 'ERROR'
+      }">{{ dataset.status }}</span>
+    </div>
+  </div>
+  <div class="dataset-details">
+    <div class="detail-item">
+      <span class="detail-label">Rows</span>
+      <span class="detail-value">{{ dataset.rowCount }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Columns</span>
+      <span class="detail-value">{{ dataset.columnCount }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Created</span>
+      <span class="detail-value">{{ formatDate(dataset.createdAt) }}</span>
+    </div>
+  </div>
+  <div class="dataset-stats">
+    <button class="btn btn-statistics" (click)="onStatisticsClick($event)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Statistics
+    </button>
+  </div>
+  <div class="dataset-actions">
+    <button class="btn btn-primary" (click)="onViewClick($event)">View Data</button>
+    <button class="btn btn-danger" (click)="onDeleteClick($event)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      Delete
+    </button>
+  </div>
+</div> 

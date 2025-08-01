@@ -1,0 +1,69 @@
+/* Profiles Manage Styles */
+
+.p-card {
+  margin-top: 1.5rem;
+  padding: 1rem;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
+.align-middle {
+  vertical-align: middle;
+}
+.user-info {
+  margin-left: 40%;
+  transform: translateY(50%);
+  margin-bottom: 1rem;
+}
+.assigned-profiles-field {
+  margin-top: 4rem;
+  padding: 1em;
+}
+.assigned-profiles-field p-multiselect {
+  margin-left : 1rem;
+}
+/* Make table responsive */
+:host ::ng-deep .p-datatable-responsive .p-datatable-tbody > tr > td {
+  word-break: break-word;
+}
+
+:host ::ng-deep .p-datatable {
+  font-size: 0.95rem;
+}
+
+:host ::ng-deep .p-popover .p-menu {
+  min-width: 12rem;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+:host ::ng-deep .p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
+  background: #f8f9fa;
+}
+
+:host ::ng-deep .p-tag {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  :host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+  :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem;
+  }
+} 

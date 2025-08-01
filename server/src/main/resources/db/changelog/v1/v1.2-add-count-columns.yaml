@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-count-columns-to-dataset
+      author: vernical
+      changes:
+        - addColumn:
+            tableName: datasets
+            columns:
+              - column:
+                  name: row_count
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                  remarks: "Total number of rows in the dataset"
+              - column:
+                  name: column_count
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                  remarks: "Total number of columns in the dataset" 

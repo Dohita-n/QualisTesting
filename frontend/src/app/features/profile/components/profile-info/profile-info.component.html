@@ -1,0 +1,261 @@
+<div class="profile-container">
+  <!-- View Mode -->
+  <p-card *ngIf="!isEditing" header="Profile Information">
+    <div class="flex flex-col items-center gap-8 p-8">
+      <p-avatar 
+        [image]="user.avatar || 'default-avatar.png'" 
+        [style]="{ width: '150px', height: '150px' }" 
+        class="mr-3" 
+        size="xlarge" 
+        shape="circle" 
+        aria-label="User avatar">
+      </p-avatar>
+      
+      <div class="text-center">
+        <h2 class="text-2xl font-bold">{{ user.username }}</h2>
+        <div *ngIf="user.profiles && user.profiles.length > 0" class="my-2">
+          <p-tag 
+            *ngFor="let profile of user.profiles"
+            [value]="profile.name" 
+            [severity]="getProfileSeverity(profile.name)"
+            class="mx-1">
+          </p-tag>
+        </div>
+        
+        <!-- No need for roles here as they are displayed by profile -->
+      </div>
+
+      <div class="flex gap-3 mt-4">
+        <p-button 
+          icon="pi pi-pencil" 
+          label="Edit Profile" 
+          (onClick)="toggleEdit()">
+        </p-button>
+        <p-button 
+          icon="pi pi-key" 
+          label="Change Password" 
+          styleClass="p-button-outlined"
+          (onClick)="showPasswordDialog = true">
+        </p-button>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Edit Mode -->
+  <p-card *ngIf="isEditing" header="Edit Profile">
+    <form #profileForm="ngForm" (ngSubmit)="saveProfile()" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2 flex flex-col avatar-container">
+        <p-avatar 
+          [image]="editUser.avatar || '/../../default-avatar.png'" 
+          class="mr-2" 
+          size="xlarge" 
+          [style]="{ width: '150px', height: '150px' }" 
+          shape="circle" 
+          aria-label="User avatar">
+        </p-avatar>
+        <p-fileUpload 
+          mode="basic" 
+          accept="image/*" 
+          chooseLabel="Change Avatar"
+          (onSelect)="onImageSelect($event)"
+          [auto]="true"
+          class="mt-6">
+        </p-fileUpload>
+      </div>
+
+      
+
+        <div class="field col-12 md:col-6">
+          <label for="firstName">First Name</label>
+          <input 
+            pInputText 
+            id="firstName" 
+            [(ngModel)]="editUser.firstName" 
+            name="firstName" 
+            class="mt-2 w-full" />
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="lastName">Last Name</label>
+          <input 
+            pInputText 
+            id="lastName" 
+            [(ngModel)]="editUser.lastName" 
+            name="lastName" 
+            class="mt-2 w-full" />
+        </div>
+
+        <div class="p-fluid">
+          <div class="field col-12 md:col-6">
+            <label for="username">Username</label>
+            <input 
+              pInputText 
+              id="username" 
+              [(ngModel)]="editUser.username" 
+              name="username" 
+              class="mt-2 w-full" 
+              required 
+              minlength="3" />
+            <small 
+              *ngIf="profileForm.controls['username']?.invalid && profileForm.controls['username']?.touched"
+              class="p-error">
+              Username is required (minimum 3 characters)
+            </small>
+          </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="email">Email</label>
+          <input 
+            pInputText 
+            id="email" 
+            [(ngModel)]="editUser.email" 
+            name="email" 
+            class="mt-2 w-full" 
+            [disabled]="true" />
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="profile">Profile Types</label>
+          <div class="profile-list p-2 border rounded">
+            <div *ngFor="let profile of editUser.profiles" class="profile-item mb-1">
+              <!-- <span class="text-sm">{{ profile.name }}</span> -->
+              <p-tag 
+                [value]="profile.name" 
+                [severity]="getProfileSeverity(profile.name)"
+                class="ml-2">
+              </p-tag>
+            </div>
+            <span *ngIf="!editUser.profiles || editUser.profiles.length === 0" class="text-gray-500 text-sm">
+              No profiles assigned
+            </span>
+          </div>
+          <small class="text-gray-500">Profiles can only be changed by an administrator</small>
+        </div>
+
+       <div class="field col-12">
+          <label for="roles">Roles</label>
+          <div *ngFor="let profile of user.profiles" class="mt-2">
+            <div class="flex flex-col gap-1">
+              <div class="profile-name font-medium">
+                {{ profile.name }}:
+              </div>
+              <div class="flex flex-wrap gap-1 ml-3">
+                <p-tag *ngFor="let roleName of profile.roleNames" 
+                     [value]="roleName" 
+                     [severity]="getRoleSeverity(roleName)"
+                     [styleClass]="'role-tag-' + getRoleSeverity(roleName)"
+                     class="text-sm">
+                </p-tag>
+                <span *ngIf="!profile.roleNames || profile.roleNames.length === 0" class="text-gray-500 text-sm">
+                  No roles assigned
+                </span>
+              </div>
+            </div>
+          </div>
+        </div> 
+
+        <div class="flex gap-3 col-12 justify-end mt-4">
+          <p-button 
+            label="Cancel" 
+            styleClass="p-button-outlined" 
+            (onClick)="cancelEdit()">
+          </p-button>
+          <p-button 
+            type="submit" 
+            label="Save" 
+            [disabled]="profileForm.invalid">
+          </p-button>
+        </div>
+      </div>
+    </form>
+  </p-card>
+
+  <!-- Password Change Dialog -->
+  <p-dialog 
+    header="Change Password" 
+    [(visible)]="showPasswordDialog" 
+    [modal]="true" 
+    [style]="{width: '500px'}"
+    [draggable]="false"
+    [resizable]="false">
+    
+    <form #passwordForm="ngForm" (ngSubmit)="changePassword()" class="p-fluid grid gap-4">
+      <div class="field col-12">
+        <label for="currentPassword" class="block text-gray-700 font-medium mb-2">Current Password</label>
+        <p-password 
+          id="currentPassword" 
+          [(ngModel)]="passwordData.current" 
+          name="currentPassword"
+          [feedback]="false" 
+          toggleMask
+          [inputStyle]="{width: '100%'}"
+          placeholder="Enter current password"
+          required>
+        </p-password>
+        <small 
+          *ngIf="passwordForm.controls['currentPassword']?.invalid && passwordForm.controls['currentPassword']?.touched"
+          class="p-error">
+          Current password is required
+        </small>
+      </div>
+
+      <div class="field col-12">
+        <label for="newPassword" class="block text-gray-700 font-medium mb-2">New Password</label>
+        <p-password 
+          id="newPassword" 
+          [(ngModel)]="passwordData.new" 
+          name="newPassword"
+          [feedback]="true"
+          toggleMask
+          [inputStyle]="{width: '100%'}"
+          placeholder="Enter new password"
+          required
+          pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$">
+        </p-password>
+        <small 
+          *ngIf="passwordForm.controls['newPassword']?.invalid && passwordForm.controls['newPassword']?.touched"
+          class="p-error">
+          Password must be at least 8 characters long and contain letters and numbers
+        </small>
+      </div>
+
+      <div class="field col-12">
+        <label for="confirmPassword" class="block text-gray-700 font-medium mb-2">Confirm Password</label>
+        <p-password 
+          id="confirmPassword" 
+          [(ngModel)]="passwordData.confirm" 
+          name="confirmPassword"
+          [feedback]="false" 
+          toggleMask
+          [inputStyle]="{width: '100%'}"
+          placeholder="Confirm new password"
+          required>
+        </p-password>
+        <small 
+          *ngIf="passwordData.new !== passwordData.confirm && passwordForm.controls['confirmPassword']?.touched"
+          class="p-error">
+          Passwords do not match
+        </small>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="flex justify-between">
+        <p-button 
+          label="Cancel" 
+          icon="pi pi-times"
+          styleClass="p-button-text"
+          (onClick)="showPasswordDialog = false">
+        </p-button>
+        <p-button 
+          type="submit"
+          label="Change Password" 
+          icon="pi pi-check"
+          [loading]="isChangingPassword"
+          [disabled]="passwordForm.invalid || passwordData.new !== passwordData.confirm"
+          (onClick)="passwordForm.ngSubmit.emit()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

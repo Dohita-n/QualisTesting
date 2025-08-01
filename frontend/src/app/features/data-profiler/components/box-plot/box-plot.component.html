@@ -1,0 +1,33 @@
+<div class="boxplot-container" [style.height.px]="height">
+    <div class="boxplot">
+      <div class="boxplot-line" 
+           [style.left.%]="0" 
+           [style.width.%]="100"></div>
+      <div class="boxplot-box" 
+           [style.left.%]="getPercentPosition(q1 || min)" 
+           [style.width.%]="getBoxWidth()"></div>
+      <div class="boxplot-median" 
+           [style.left.%]="getPercentPosition(median)"></div>
+      <div class="boxplot-whisker boxplot-whisker-left" 
+           [style.left.%]="getPercentPosition(min)"></div>
+      <div class="boxplot-whisker boxplot-whisker-right" 
+           [style.left.%]="getPercentPosition(max)"></div>
+      <div class="boxplot-mean" 
+           [style.left.%]="getPercentPosition(mean)"></div>
+    </div>
+    <div class="boxplot-labels">
+      <div class="boxplot-label boxplot-label-min" [style.left.%]="getPercentPosition(min)">
+        {{ min | number:'1.2-2' }}
+      </div>
+      <div class="boxplot-label boxplot-label-median" [style.left.%]="getPercentPosition(median)">
+        {{ median | number:'1.2-2' }}
+      </div>
+      <div class="boxplot-label boxplot-label-max" [style.left.%]="getPercentPosition(max)">
+        {{ max | number:'1.2-2' }}
+      </div>
+      <div class="boxplot-label boxplot-label-mean" [style.left.%]="getPercentPosition(mean)">
+        {{ mean | number:'1.2-2' }}
+      </div>
+    </div>
+  </div>
+`

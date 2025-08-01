@@ -1,0 +1,81 @@
+<div class="sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header">
+      <div class="logo">
+       <!-- <span *ngIf="!isCollapsed" class="logo-text">QualisDS</span> -->
+        <img src="/logoresized.png" alt="QualisDS Logo" class="logo-image" *ngIf="!isCollapsed">
+        <img *ngIf="isCollapsed" class="logo-collapsed" src="/logocollapsed.png" alt="Menu" (click)="toggleSidebar()">
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar()" *ngIf="!isCollapsed">
+        <fa-icon [icon]="faChevronLeft" class="toggle-icon"></fa-icon>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a routerLink="/dashboard" 
+            [class.active]="currentRoute.startsWith('/dashboard') || currentRoute.startsWith('/datasets/')" 
+            class="nav-link">
+            <fa-icon [icon]="faDatabase" class="nav-icon"></fa-icon>
+            <span class="nav-text" *ngIf="!isCollapsed">Datasets</span>
+          </a>
+        </li>
+        <!-- <li class="nav-item">
+          <a routerLink="/datasets" 
+            [class.active]="currentRoute === '/datasets'" 
+            class="nav-link">
+            <fa-icon [icon]="faDatabase" class="nav-icon"></fa-icon>
+            <span class="nav-text" *ngIf="!isCollapsed">Datasets</span>
+          </a>
+        </li> -->
+        <li class="nav-item">
+          <a routerLink="/data-profiler" routerLinkActive="active" class="nav-link">
+            <fa-icon [icon]="faSquarePollVertical" class="nav-icon"></fa-icon>
+            <span class="nav-text" *ngIf="!isCollapsed">Data Profiler</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/data-preparation" routerLinkActive="active" class="nav-link">
+            <fa-icon [icon]="faWandMagicSparkles" class="nav-icon"></fa-icon>
+            <span class="nav-text" *ngIf="!isCollapsed">Data Cleaning</span>
+          </a>
+        </li>
+        <!-- <li class="nav-item">
+          <a routerLink="/metrics" routerLinkActive="active" class="nav-link">
+            <fa-icon [icon]="faServer" class="nav-icon"></fa-icon>
+            <span class="nav-text" *ngIf="!isCollapsed">System Metrics</span>
+          </a>
+        </li> -->
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="profile-section">
+        <div class="user-profile" *ngIf="!isCollapsed">
+        <a routerLink="/profile" routerLinkActive="active" class="profile-link">
+          <div class="user-avatar" *ngIf="!avatarUrl">{{ getUserInitials() }}</div>
+          <img *ngIf="avatarUrl" [src]="avatarUrl" class="user-avatar-img" >
+        </a>
+          <div class="user-info">
+            <div class="user-name">{{ currentUser?.username || 'Guest' }}</div>
+            <div *ngFor="let profile of userProfiles" class="role-badge" [ngClass]="getProfileClass(profile.name)">
+              {{ profile.name }}
+            </div>
+            <div *ngIf="userProfiles.length === 0" class="role-badge">
+              No Profile
+            </div>
+          </div>
+     
+        </div>
+        <a routerLink="/profile" routerLinkActive="active" class="profile-link">
+        <div class="user-avatar-small" *ngIf="isCollapsed && !avatarUrl">{{ getUserInitials() }}</div>
+        <img *ngIf="isCollapsed && avatarUrl" [src]="avatarUrl" class="user-avatar-small-img" >
+        </a>
+      </div>
+      
+      <button class="logout-btn" (click)="logout()" [title]="isCollapsed ? 'Logout' : ''">
+        <fa-icon [icon]="faSignOutAlt" class="logout-icon"></fa-icon>
+        <span class="logout-text" *ngIf="!isCollapsed">Logout</span>
+      </button>
+    </div>
+  </div>

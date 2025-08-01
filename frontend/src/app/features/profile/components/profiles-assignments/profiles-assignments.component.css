@@ -1,0 +1,31 @@
+.p-inputgroup input{
+    margin-right:20em;
+
+
+}
+
+/* Add custom CSS for role tag styling */
+::ng-deep .role-tag-warning {
+  background-color: #f59e0b !important;
+  color: #fff !important;
+}
+
+::ng-deep .role-tag-info {
+  background-color: #3b82f6 !important;
+  color: #fff !important;
+}
+
+::ng-deep .role-tag-success {
+  background-color: #10b981 !important;
+  color: #fff !important;
+}
+
+::ng-deep .role-tag-danger {
+  background-color: #ef4444 !important;
+  color: #fff !important;
+}
+
+::ng-deep .role-tag-secondary {
+  background-color: #6b7280 !important;
+  color: #fff !important;
+}

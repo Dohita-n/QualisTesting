@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1.3.0
+      author: claude
+      changes:
+        - addColumn:
+            tableName: dataset_column_statistics
+            columns:
+              - column:
+                  name: validation_pattern
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: valid_count
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: invalid_count
+                  type: bigint
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_validated
+                  type: timestamp
+                  constraints:
+                    nullable: true 

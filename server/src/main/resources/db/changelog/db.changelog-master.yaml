@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/v1/v1.0-initial-schema.yaml
+  - include:
+      file: db/changelog/v1/v1.2-add-count-columns.yaml
+  - include:
+      file: db/changelog/v1/v1.3-add-validation-columns.yaml

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Console - Profiler</title>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading state -->
+        <div *ngIf="loading.summary" class="loading-overlay">
+            <div class="spinner"></div>
+            <span>Loading dataset information...</span>
+        </div>
+        
+        <!-- Error state -->
+        <div *ngIf="error.summary" class="error-message">
+            <i class="error-icon"></i>
+            <span>{{ error.summary }}</span>
+            <button (click)="loadDatasetSummary()">Retry</button>
+        </div>
+        
+        <!-- Dataset header -->
+        <div *ngIf="datasetSummary" class="header">
+            <div>
+                <h1 class="dataset-title">{{ datasetSummary.name }}</h1>
+                <div class="dataset-meta">
+                    <span>ID: {{ datasetSummary.id }}</span>
+                    <span>Created: {{ datasetSummary.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+                </div>
+            </div>
+            <button (click)="exportReport()">Export Report</button>
+        </div>
+        
+        <!-- Dataset stats -->
+        <div *ngIf="datasetSummary" class="stats-grid">
+            <div class="stat-card">
+                <h3>Columns</h3>
+                <div class="value">{{ datasetSummary.columnCount }}</div>
+                <div>Total dataset columns</div>
+            </div>
+            <div class="stat-card">
+                <h3>Rows</h3>
+                <div class="value">{{ datasetSummary.rowCount }}</div>
+                <div>Total records</div>
+            </div>
+            <div class="stat-card">
+                <h3>Data Quality</h3>
+                <div class="value">{{ calculateQualityScore() | number:'1.0-0' }}%</div>
+                <div>Valid records across all columns</div>
+            </div>
+            <div class="stat-card">
+                <h3>Last Analyzed</h3>
+                <div class="value">Just now</div>
+                <div>{{ datasetSummary.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</div>
+            </div>
+        </div>
+        
+        <!-- Columns list -->
+        <div *ngIf="datasetSummary" class="columns-section">
+            <div class="columns-header">
+                <h2>Columns</h2>
+                <div class="search-filter">
+                    <input type="text" placeholder="Search columns..." [(ngModel)]="columnFilter">
+                    <select [(ngModel)]="dataTypeFilter">
+                        <option value="">All Data Types</option>
+                        <option value="STRING">STRING</option>
+                        <option value="INTEGER">INTEGER</option>
+                        <option value="FLOAT">FLOAT</option>
+                        <option value="DATE">DATE</option>
+                        <option value="BOOLEAN">BOOLEAN</option>
+                        <option value="DECIMAL">DECIMAL</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="column-list">
+                <div *ngFor="let column of filteredColumns" 
+                     class="column-item"
+                     [class.active]="selectedColumn?.id === column.id"
+                     (click)="selectColumn(column)">
+                    <div class="column-name">{{ column.name }}</div>
+                    <div class="data-type">{{ column.dataType }}</div>
+                    <!--<div>{{ column.uniqueCount }} unique</div> -->
+                    <div class="quality-indicator">
+                        <div class="quality-dot" 
+                             [ngClass]="getQualityClass(column)"></div>
+                        <span>{{ getQualityPercent(column) | number:'1.0-0' }}%</span>
+                    </div>
+                    <div>{{ getColumnSummary(column) }}</div>
+                </div>
+                
+                <!-- Empty state for filtered columns -->
+                <div *ngIf="filteredColumns.length === 0" class="empty-state">
+                    No columns match your filter criteria
+                </div>
+            </div>
+        </div>
+        
+        <!-- Column details -->
+        <div *ngIf="columnStatistics" class="column-details">
+            <!-- Loading state for column details -->
+            <div *ngIf="loading.columnDetails" class="loading-overlay">
+                <div class="spinner"></div>
+                <span>Loading column statistics...</span>
+            </div>
+            
+            <!-- Column details header -->
+            <div class="details-header">
+                <div>
+                    <h2 class="details-title">{{ columnStatistics.name }}</h2>
+                    <div class="dataset-meta">
+                        <span>ID: {{ columnStatistics.id }}</span>
+                        <span>Data Type: {{ columnStatistics.dataType }}</span>
+                    </div>
+                </div>
+                <div class="quality-indicator" *ngIf="columnStatistics.validationMetrics">
+                    <div class="quality-dot" 
+                         [ngClass]="getQualityClassFromMetrics(columnStatistics.validationMetrics.validPercent)"></div>
+                    <span>Data Quality: {{ getQualityLabelFromMetrics(columnStatistics.validationMetrics.validPercent) }}
+                        ({{ columnStatistics.validationMetrics.validPercent | number:'1.0-1' }}%)</span>
+                </div>
+            </div>
+            
+            <!-- Column statistics -->
+            <div class="details-stats">
+                <div class="stat-item">
+                    <div class="label">Unique Values</div>
+                    <div class="value">{{ columnStatistics.uniqueCount }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Null Values</div>
+                    <div class="value">{{ columnStatistics.nullCount }}</div>
+                </div>
+                <div class="stat-item" *ngIf="columnStatistics.mean !== undefined">
+                    <div class="label">Mean</div>
+                    <div class="value">{{ columnStatistics.mean | number:'1.2-2' }}</div>
+                </div>
+                <div class="stat-item" *ngIf="columnStatistics.stdDev !== undefined">
+                    <div class="label">Std Dev</div>
+                    <div class="value">{{ columnStatistics.stdDev | number:'1.2-2' }}</div>
+                </div>
+            </div>
+            
+            <!-- Visualization charts -->
+            <div *ngIf="columnStatistics.dataType !== 'BOOLEAN'">
+              <!-- Top row with fixed width charts -->
+              <div class="top-charts-container">
+                <div class="chart-card skewness-chart" *ngIf="columnStatistics.skewness !== undefined">
+                  <h3 class="chart-title">Distribution Skewness</h3>
+                  <app-skewness-gauge
+                      [skewness]="columnStatistics.skewness"
+                      [height]="getChartHeight()"></app-skewness-gauge>
+                </div>
+                <div class="chart-card boxplot-chart" *ngIf="isNumericColumn(columnStatistics.dataType)">
+                  <h3 class="chart-title">Statistical Summary</h3>
+                  <app-box-plot
+                      [min]="toNumber(columnStatistics.min)"
+                      [max]="toNumber(columnStatistics.max)" 
+                      [median]="columnStatistics.median || 0"
+                      [mean]="columnStatistics.mean || 0"
+                      [stdDev]="columnStatistics.stdDev || 0"
+                      [height]="getChartHeight()"></app-box-plot>
+                </div>
+              </div>
+              
+              <!-- Bottom row with full width chart -->
+              <div class="chart-card full-width-chart">
+                <h3 class="chart-title">Value Distribution</h3>
+                <app-bar-chart *ngIf="columnStatistics.valueDistribution?.length"
+                              [data]="safeFrequentValues(columnStatistics)"
+                              [height]="getChartHeight()"></app-bar-chart>
+                <div class="chart-placeholder" *ngIf="!columnStatistics.valueDistribution?.length">
+                  No distribution data available
+                </div>
+              </div>
+            </div>
+            
+            <!-- Frequent values -->
+            <div class="frequent-values" *ngIf="safeFrequentValues(columnStatistics).length > 0">
+                <h3>Frequent Values</h3>
+                <div *ngFor="let item of safeFrequentValues(columnStatistics)" class="value-row">
+                    <div class="value-label">{{ item.name }}</div>
+                    <div class="value-bar">
+                        <div class="value-fill" [style.width.%]="item.percent"></div>
+                    </div>
+                    <div class="value-count">{{ item.value }} ({{ item.percent | number:'1.0-1' }}%)</div>
+                </div>
+            </div>
+            
+            <!-- Validation section -->
+            <div class="validation-section" *ngIf="columnStatistics.validationMetrics">
+                <h3>Data Validation</h3>
+                <div class="validation-stats">
+                    <div class="validation-stat validation-valid">
+                        <div class="value">{{ columnStatistics.validationMetrics.validCount }}</div>
+                        <div class="label">Valid</div>
+                    </div>
+                    <div class="validation-stat validation-invalid">
+                        <div class="value">{{ columnStatistics.validationMetrics.invalidCount }}</div>
+                        <div class="label">Invalid</div>
+                    </div>
+                    <div class="validation-stat validation-null">
+                        <div class="value">{{ columnStatistics.validationMetrics.emptyCount }}</div>
+                        <div class="label">Null/Empty</div>
+                    </div>
+                </div>
+                
+                <div *ngIf="hasValidationPattern">
+                    <h4>Validation Pattern</h4>
+                    <div class="pattern-display">{{ getValidationPattern() }}</div>
+                    <p>{{ getPatternDescription(columnStatistics.dataType) }}</p>
+                </div>
+            </div>
+            
+            <!-- Z-score analysis for numeric columns -->
+            <div class="z-score-section" *ngIf="isNumericColumn(columnStatistics.dataType) && columnStatistics.mean && columnStatistics.stdDev">
+                <h3>Z-Score Analysis</h3>
+                <table class="z-score-table">
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th>Count</th>
+                            <th>Z-Score</th>
+                            <th>Distribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let item of getZScores(columnStatistics)">
+                            <td>{{ item.value }}</td>
+                            <td>{{ columnStatistics.frequentValues![item.value] }}</td>
+                            <td [ngClass]="{'outlier': Math.abs(item.score) > 2}">
+                                {{ item.score | number:'1.2-2' }}
+                            </td>
+                            <td>
+                                <div class="z-score-indicator">
+                                    <div class="z-score-marker" 
+                                         [style.left.%]="getZScorePosition(item.score)"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Empty state for data loading -->
+        <div *ngIf="!datasetSummary && !loading.summary && !error.summary" class="empty-state">
+            <div class="empty-icon">📊</div>
+            <h2>Data Profiler</h2>
+            <p>Select a dataset to view detailed statistics and data quality metrics</p>
+        </div>
+    </div>
+</body>
+</html>

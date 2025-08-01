@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+    }
+    
+    body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .table-container {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      overflow: auto;
+      will-change: transform; /* Performance optimization for smoother scrolling */
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 100%;
+      margin: 0;
+     /*  table-layout: fixed; */
+    }
+    
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #f9fafb;
+    }
+    
+    th {
+      background-color: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+      position: relative;
+      overflow: visible;
+    }
+    
+    .column-type {
+      display: block;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: normal;
+      margin-top: 4px;
+      padding: 2px 4px;
+      background-color: #f3f4f6;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .column-type:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .column-type.changed {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .column-type-dropdown {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 100;
+      margin-top: 4px;
+      left: 16px; /* Match th padding-left */
+      min-width: 180px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .column-type-dropdown-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .column-type-dropdown-item:hover {
+      background-color: #f3f4f6;
+    }
+    
+    .decimal-settings {
+      padding: 8px 12px;
+      background-color: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .decimal-settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .decimal-settings-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .decimal-label {
+      font-size: 12px;
+      color: #4b5563;
+    }
+    
+    .decimal-spinner {
+      width: 60px;
+      padding: 4px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .decimal-spinner:focus {
+      outline: none;
+      border-color: #3b82f6;
+      ring: 2px solid #bfdbfe;
+    }
+    
+    .decimal-info {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    
+    .decimal-apply {
+      padding: 4px 8px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+    }
+    
+    .decimal-apply:hover {
+      background-color: #2563eb;
+    }
+    
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    tr:hover td {
+      background-color: #f3f4f6;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+    
+    thead tr {
+      height: auto;
+      min-height: 60px;
+    }
+
+    /* Validation Bar Styles */
+   .validation-bar-container {
+      font-size: 9px;
+      max-width: 100%;
+    } 
+     .validation-bar {
+      height: 8px;
+      display: flex;
+      margin-top: 6px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      border: 1px solid #e5e7eb;
+    } 
+    
+    .validation-segment-valid {
+      background-color: #10b981; /* Green */
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    .validation-segment-invalid {
+      background-color: #ef4444; /* Red */
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    .validation-segment-empty {
+      background-color: #374151; /* Dark gray */
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    /* Cell validation styles */
+    .invalid-value {
+      color: #dc2626 !important; /* Red */
+      font-weight: 500;
+      background-color: rgba(254, 226, 226, 0.3); /* Light red background */
+    }
+    
+    .empty-value {
+      color: #374151 !important; /* Dark gray */
+      font-style: italic;
+      background-color: rgba(243, 244, 246, 0.5); /* Light gray background */
+    }
+    
+    .validation-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      margin-top: 4px;
+      margin-bottom: 2px;
+      border-top: 1px dotted #e5e7eb;
+      padding-top: 4px;
+    }
+    
+    /* Validation stats */
+    .validation-stats {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none; /* Hide by default */
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      padding: 4px 0px;
+      white-space: nowrap;
+      z-index: 10; /* Ensure it appears above other elements */
+    }
+    
+    /* Show validation stats when hovering over validation bar */
+    .validation-bar:hover + .validation-stats,
+    .validation-stats:hover {
+      display: block; /* Show on hover */
+      transition: display 0.1s ease;
+      background-color: #c2c2c2;
+      border-radius: 4px;
+    }
+    
+    .validation-stats .stat {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    
+    .validation-stats .valid {
+      background-color: rgba(16, 185, 129, 0.541);
+      color: #065f46;
+      margin-left: 10px;
+    }
+    
+    .validation-stats .invalid {
+      background-color: rgba(239, 68, 68, 0.486);
+      color: #b91c1c;
+    }
+    
+    .validation-stats .empty {
+      background-color: rgba(55, 65, 81, 0.486);
+      color: #4b5563;
+    }
+    
+    /* Validation indicator */
+    .validation-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(59, 130, 246, 0.9); /* Blue bg */
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    .validation-indicator::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: white;
+      margin-right: 8px;
+      animation: blink 1s infinite ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0% {
+        opacity: 0.7;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0.7;
+      }
+    }
+    
+    @keyframes blink {
+      0% {
+        opacity: 0.5;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0.5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="table-container" id="tableContainer">
+    <table>
+      <thead>
+        <tr>
+          {{HEADERS}}
+        </tr>
+      </thead>
+      <tbody>
+        {{ROWS}}
+      </tbody>
+    </table>
+  </div>
+  
+  <script>
+    {{SCRIPTS}}
+    
+    // Initialize table behavior
+    document.addEventListener('DOMContentLoaded', function() {
+      const container = document.getElementById('tableContainer');
+      if (container) {
+        // Set initial scroll position
+        container.scrollLeft = '{{SCROLL_X}}';
+        container.scrollTop = '{{SCROLL_Y}}';
+        
+        // Track scroll changes
+        let scrollTimeout;
+        container.addEventListener('scroll', function() {
+          // Throttle scroll events for better performance
+          if (!scrollTimeout) {
+            scrollTimeout = setTimeout(function() {
+              const scrollMsg = {
+                action: 'scrollChanged',
+                scrollX: container.scrollLeft,
+                scrollY: container.scrollTop
+              };
+              window.parent.postMessage(JSON.stringify(scrollMsg), '*');
+              scrollTimeout = null;
+            }, 100);
+          }
+        });
+      }
+      
+      // Set up validated inputs for decimal spinners
+      document.querySelectorAll('.decimal-spinner').forEach(function(spinner) {
+        spinner.addEventListener('input', function() {
+          const id = this.id;
+          const columnName = id.split('-')[1];
+          const isScale = id.startsWith('scale');
+          
+          // Cross-validate precision and scale
+          if (isScale) {
+            const precisionInput = document.getElementById('precision-' + columnName);
+            const scale = parseInt(this.value) || 0;
+            const precision = parseInt(precisionInput.value) || 10;
+            
+            if (scale > precision) {
+              precisionInput.value = scale;
+            }
+          } else {
+            const scaleInput = document.getElementById('scale-' + columnName);
+            const precision = parseInt(this.value) || 10;
+            const scale = parseInt(scaleInput.value) || 0;
+            
+            if (precision < scale) {
+              this.value = scale;
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,231 @@
+<div class="dataset-view-container">
+  <!-- PrimeNG Toast for notifications -->
+  <p-toast></p-toast>
+  
+  <!-- Header with back button -->
+  <div class="header">
+    <button class="btn btn-secondary" routerLink="/dashboard">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+      </svg>
+      Back to Datasets
+    </button>
+    
+    <h1 *ngIf="dataset" class="dataset-title">{{ dataset.name }}</h1>
+  </div>
+  
+  <div class="dataset-card" *ngIf="dataset">
+    <!-- Dataset Info -->
+    
+    <div class="dataset-info-section">
+      <div class="section-header">
+        <h2>Dataset Information</h2>
+        <span class="dataset-status" [ngClass]="{
+          'status-complete': dataset.status === 'COMPLETE',
+          'status-processing': dataset.status === 'PROCESSING',
+          'status-error': dataset.status === 'ERROR'
+        }">{{ dataset.status }}</span>
+        <div class ="d-flex justify-content-between">
+          <button class="btn btn-sm btn-secondary export-btn ms-auto mt-1" (click)="exportToCsv()">Export</button>
+        </div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Created</span>
+          <span class="info-value">{{ formatDate(dataset.createdAt) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Last Modified</span>
+          <span class="info-value">{{ formatDate(dataset.modifiedAt) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Rows</span>
+          <span class="info-value">{{ dataset.rowCount }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Columns</span>
+          <span class="info-value">{{ dataset.columnCount }}</span>
+        </div>
+      </div>
+      
+      <div *ngIf="dataset.description" class="description">
+        <h3>Description</h3>
+        <p>{{ dataset.description }}</p>
+      </div>
+    </div>
+    
+    <!-- Data Validation Section -->
+    <div class="data-validation-section">
+      <div class="section-header">
+        <h2>Data Validation</h2>
+      </div>
+      
+      <div class="validation-controls">
+        <div class="control-group">
+          <label for="column-selector">Select Column:</label>
+          <select id="column-selector" class="form-control" [(ngModel)]="selectedColumnForValidation" (ngModelChange)="autoFetchPattern()">
+            <option value="">-- Select a column --</option>
+            <option *ngFor="let column of datasetColumns" [value]="column.id">{{ column.name }}</option>
+          </select>
+        </div>
+        
+        <div class="control-group" *ngIf="selectedColumnForValidation">
+          <label for="validation-pattern">Validation Pattern:</label>
+          <div class="input-group">
+            <input 
+              type="text" 
+              id="validation-pattern" 
+              class="form-control" 
+              placeholder="Enter regex pattern" 
+              [(ngModel)]="validationPattern">
+            <button class="btn btn-outline-secondary" (click)="checkValidation()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Check
+            </button>
+          </div>
+          <small class="form-text text-muted">
+            Enter a regular expression pattern to validate this column's data
+          </small>
+          
+          <!-- Pattern helper buttons -->
+          <div class="pattern-helpers mt-2">
+            <button class="btn btn-sm btn-outline-secondary" (click)="autoFetchPattern()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reset to Default
+            </button>
+          </div>
+        </div>
+        
+        <!-- Show Apply button only after validation check -->
+        <button 
+          class="btn btn-primary apply-validation-btn" 
+          *ngIf="selectedColumnForValidation && validationPattern && validationResults"
+          (click)="applyValidation()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Apply Validation
+        </button>
+      </div>
+      
+      <div class="validation-summary" *ngIf="validationResults">
+        <div class="summary-card">
+          <div class="summary-title">Validation Check Results</div>
+          <div class="summary-item">
+            <span class="summary-label">Valid</span>
+            <span class="summary-value valid-count">{{ validationResults.validCount }} ({{ getValidPercentage() | number:'1.1-1' }}%)</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Invalid</span>
+            <span class="summary-value invalid-count">{{ validationResults.invalidCount }} ({{ getInvalidPercentage() | number:'1.1-1' }}%)</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Empty</span>
+            <span class="summary-value empty-count">{{ validationResults.emptyCount }} ({{ getEmptyPercentage() | number:'1.1-1' }}%)</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedColumnName">
+            <span class="summary-label">Column</span>
+            <span class="summary-value">{{ selectedColumnName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data Preview Section -->
+    <div class="data-preview-section">
+      <div class="preview-header">
+        <h2>Data Preview</h2>
+        <div class="actions">
+          <button 
+            *ngIf="pendingTypeChanges > 0"
+            class="btn btn-primary apply-changes-btn" 
+            (click)="applyTypeChanges()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Apply {{ pendingTypeChanges }} Change{{ pendingTypeChanges > 1 ? 's' : '' }}</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-indicator">
+        <svg class="loading-spinner spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-lg text-center text-gray-700 mb-2">
+          Loading data preview...
+        </p>
+        <p class="text-sm text-center text-gray-500">
+          This may take a moment for large datasets
+        </p>
+        <div class="progress-bar">
+          <div class="progress-fill pulse"></div>
+        </div>
+      </div>
+      <!-- Iframe Table Component -->
+      <div *ngIf="!isLoading"
+     class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
+        <app-iframe-table 
+          [headers]="dataPreviewHeaders" 
+          [data]="dataPreview"
+          [datasetId]="datasetId"
+          [validationResults]="columnValidationResults"
+          (typeChangesSaved)="onTypeChangesSaved()"
+          (pendingChangesUpdated)="updatePendingChanges($event)"
+          (dataChanged)="onDataChanged($event)"
+          
+        ></app-iframe-table>
+      <!-- Pagination Controls -->
+      </div>
+            <div class="flex items-center justify-center gap-4 mt-4">
+        <button
+          (click)="loadDatasetPage(currentPage - 1)"
+          [disabled]="currentPage === 0"
+          class="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Précédent
+        </button>
+
+        <span>Page {{ currentPage + 1 }} / {{ totalPages }}</span>
+
+        <button
+          (click)="loadDatasetPage(currentPage + 1)"
+          [disabled]="currentPage + 1 >= totalPages"
+          class="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Suivant
+        </button>
+      </div>
+      <div class="mt-4 flex justify-end">
+  <button
+    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+    (click)="saveDatasetRows()"
+    [disabled]="!hasUnsavedChanges"
+  >
+    Enregistrer les modifications
+  </button>
+</div>
+
+      <!-- Row Count Info -->
+      <div *ngIf="!isLoading && dataPreview.length > 0" class="table-footer">
+        <div class="text-sm text-gray-700">
+          Showing {{ totalRows }} rows
+        </div>
+        <div *ngIf="processingStatus === 'COMPLETE'" class="text-sm text-green-600 flex items-center">
+          <svg width="16" height="16" class="mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Processing complete
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
