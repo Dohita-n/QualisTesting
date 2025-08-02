@@ -106,7 +106,7 @@ public class DatasetController extends BaseController {
             @PathVariable UUID id,
             @RequestParam UUID userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "200") int size) throws Exception {  // ⬅️ Ici : defaultValue="200"
+            @RequestParam(defaultValue = "200") int size) throws Exception { 
         Map<String, Object> result = executeOperation(() -> {
             Dataset dataset = datasetRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + id));
@@ -114,7 +114,7 @@ public class DatasetController extends BaseController {
             // Check if the user has permission to view this dataset
             checkDatasetAccess(userId, dataset);
 
-            Pageable pageable = PageRequest.of(page, size, Sort.by("rowNumber")); // ⬅️ Ajoute le tri si nécessaire
+            Pageable pageable = PageRequest.of(page, size, Sort.by("rowNumber"));
             Page<DatasetRow> rows = datasetRowRepository.findByDataset(dataset, pageable);
 
             return Map.of(

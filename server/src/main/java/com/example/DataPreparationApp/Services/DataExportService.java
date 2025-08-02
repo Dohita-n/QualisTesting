@@ -12,10 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -194,6 +198,204 @@ public class DataExportService {
         }
 
         log.info("Filtered dataset exported to CSV: {}", csvFilePath);
+        return "/exports/" + filename;
+    }
+
+    /**
+     * Export a dataset to XLSX format
+     *
+     * @param datasetId The ID of the dataset to export
+     * @return The path to the exported XLSX file
+     * @throws IOException If an error occurs during export
+     */
+    public String exportDatasetToXlsx(UUID datasetId) throws IOException {
+        // Get the dataset
+        Dataset dataset = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new IllegalArgumentException("Dataset not found: " + datasetId));
+
+        // Get all columns
+        List<DatasetColumn> columns = datasetColumnRepository.findByDatasetIdOrderByPosition(datasetId);
+        if (columns.isEmpty()) {
+            throw new IllegalArgumentException("No columns found for dataset: " + datasetId);
+        }
+
+        // Get all rows
+        List<DatasetRow> rows = datasetRowRepository.findByDatasetIdOrderByRowNumber(datasetId);
+        if (rows.isEmpty()) {
+            log.warn("No rows found for dataset: {}. Attempting native query.", datasetId);
+            rows = datasetRowRepository.findByDatasetIdNative(datasetId, Integer.MAX_VALUE);
+        }
+
+        // Create export directory if it doesn't exist
+        String exportDirPath = rootDirectory + "/exports";
+        Path exportDir = Paths.get(exportDirPath);
+        Files.createDirectories(exportDir);
+
+        // Generate unique filename with timestamp
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String sanitizedName = dataset.getName().replaceAll("[^a-zA-Z0-9]", "_");
+        String filename = sanitizedName + "_" + timestamp + ".xlsx";
+        Path xlsxFilePath = exportDir.resolve(filename);
+
+        // Create workbook and sheet
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Dataset");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Add headers
+            for (int i = 0; i < columns.size(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns.get(i).getName());
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Add data rows
+            for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+                DatasetRow row = rows.get(rowIndex);
+                Row excelRow = sheet.createRow(rowIndex + 1);
+                JsonNode data = row.getData();
+
+                for (int colIndex = 0; colIndex < columns.size(); colIndex++) {
+                    DatasetColumn column = columns.get(colIndex);
+                    String columnName = column.getName();
+                    JsonNode value = data.get(columnName);
+                    
+                    Cell cell = excelRow.createCell(colIndex);
+                    
+                    // Handle null values and convert JsonNode to appropriate cell type
+                    if (value == null || value.isNull()) {
+                        cell.setCellValue("");
+                    } else if (value.isTextual()) {
+                        cell.setCellValue(value.asText());
+                    } else if (value.isNumber()) {
+                        cell.setCellValue(value.asDouble());
+                    } else if (value.isBoolean()) {
+                        cell.setCellValue(value.asBoolean());
+                    } else {
+                        cell.setCellValue(value.toString());
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < columns.size(); i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Write to file
+            try (FileOutputStream fileOut = new FileOutputStream(xlsxFilePath.toFile())) {
+                workbook.write(fileOut);
+            }
+        }
+
+        log.info("Dataset exported to XLSX: {}", xlsxFilePath);
+        return "/exports/" + filename;
+    }
+
+    /**
+     * Export a dataset to XLS format
+     *
+     * @param datasetId The ID of the dataset to export
+     * @return The path to the exported XLS file
+     * @throws IOException If an error occurs during export
+     */
+    public String exportDatasetToXls(UUID datasetId) throws IOException {
+        // Get the dataset
+        Dataset dataset = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new IllegalArgumentException("Dataset not found: " + datasetId));
+
+        // Get all columns
+        List<DatasetColumn> columns = datasetColumnRepository.findByDatasetIdOrderByPosition(datasetId);
+        if (columns.isEmpty()) {
+            throw new IllegalArgumentException("No columns found for dataset: " + datasetId);
+        }
+
+        // Get all rows
+        List<DatasetRow> rows = datasetRowRepository.findByDatasetIdOrderByRowNumber(datasetId);
+        if (rows.isEmpty()) {
+            log.warn("No rows found for dataset: {}. Attempting native query.", datasetId);
+            rows = datasetRowRepository.findByDatasetIdNative(datasetId, Integer.MAX_VALUE);
+        }
+
+        // Create export directory if it doesn't exist
+        String exportDirPath = rootDirectory + "/exports";
+        Path exportDir = Paths.get(exportDirPath);
+        Files.createDirectories(exportDir);
+
+        // Generate unique filename with timestamp
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String sanitizedName = dataset.getName().replaceAll("[^a-zA-Z0-9]", "_");
+        String filename = sanitizedName + "_" + timestamp + ".xls";
+        Path xlsFilePath = exportDir.resolve(filename);
+
+        // Create workbook and sheet
+        try (Workbook workbook = new HSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Dataset");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Add headers
+            for (int i = 0; i < columns.size(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns.get(i).getName());
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Add data rows
+            for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+                DatasetRow row = rows.get(rowIndex);
+                Row excelRow = sheet.createRow(rowIndex + 1);
+                JsonNode data = row.getData();
+
+                for (int colIndex = 0; colIndex < columns.size(); colIndex++) {
+                    DatasetColumn column = columns.get(colIndex);
+                    String columnName = column.getName();
+                    JsonNode value = data.get(columnName);
+                    
+                    Cell cell = excelRow.createCell(colIndex);
+                    
+                    // Handle null values and convert JsonNode to appropriate cell type
+                    if (value == null || value.isNull()) {
+                        cell.setCellValue("");
+                    } else if (value.isTextual()) {
+                        cell.setCellValue(value.asText());
+                    } else if (value.isNumber()) {
+                        cell.setCellValue(value.asDouble());
+                    } else if (value.isBoolean()) {
+                        cell.setCellValue(value.asBoolean());
+                    } else {
+                        cell.setCellValue(value.toString());
+                    }
+                }
+            }
+
+            // Auto-size columns
+            for (int i = 0; i < columns.size(); i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Write to file
+            try (FileOutputStream fileOut = new FileOutputStream(xlsFilePath.toFile())) {
+                workbook.write(fileOut);
+            }
+        }
+
+        log.info("Dataset exported to XLS: {}", xlsFilePath);
         return "/exports/" + filename;
     }
 } 

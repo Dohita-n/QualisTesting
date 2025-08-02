@@ -818,6 +818,9 @@ export class DataService {
       // Create the XMLHttpRequest to handle progress
       const xhr = new XMLHttpRequest();
       
+      // Set longer timeout for large files (10 minutes)
+      xhr.timeout = 600000;
+      
       // Set up progress tracking
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -846,7 +849,12 @@ export class DataService {
         observer.error(new Error('Network error occurred during upload'));
       };
       
-      // Open the request
+      // Set up timeout handler
+      xhr.ontimeout = () => {
+        observer.error(new Error('Upload timeout - file may be too large or connection too slow'));
+      };
+
+            // Open the request
       xhr.open('POST', `/api/files/upload`, true);
       
       // Set the authorization header
@@ -982,6 +990,68 @@ export class DataService {
       tap(data => console.log('CSV export successful')),
       catchError(error => {
         console.error('Error exporting dataset to CSV', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Export a dataset to XLSX and trigger download
+   * @param datasetId The ID of the dataset to export
+   * @returns An Observable of a Blob containing the XLSX data
+   */
+  exportDatasetToXlsx(datasetId: string): Observable<Blob> {
+    const token = this.authService.getToken();
+    if (!token) {
+      console.error('Error: No authentication token available');
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    // Add authorization header
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    };
+
+    // Send request to download endpoint
+    return this.http.get(`${this.apiUrl}/export/xlsx/${datasetId}`, {
+      headers,
+      responseType: 'blob'
+    }).pipe(
+      tap(data => console.log('XLSX export successful')),
+      catchError(error => {
+        console.error('Error exporting dataset to XLSX', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Export a dataset to XLS and trigger download
+   * @param datasetId The ID of the dataset to export
+   * @returns An Observable of a Blob containing the XLS data
+   */
+  exportDatasetToXls(datasetId: string): Observable<Blob> {
+    const token = this.authService.getToken();
+    if (!token) {
+      console.error('Error: No authentication token available');
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    // Add authorization header
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.ms-excel'
+    };
+
+    // Send request to download endpoint
+    return this.http.get(`${this.apiUrl}/export/xls/${datasetId}`, {
+      headers,
+      responseType: 'blob'
+    }).pipe(
+      tap(data => console.log('XLS export successful')),
+      catchError(error => {
+        console.error('Error exporting dataset to XLS', error);
         return throwError(() => error);
       })
     );

@@ -656,30 +656,118 @@ loadDatasetPage(page: number): void {
    * Export the current dataset to CSV and trigger download
    */
   exportToCsv(): void {
-        if (!this.datasetId) {
-          console.error('No dataset ID provided for export');
-          alert('Cannot export: Dataset ID is missing');
-          return;
-        }
+    console.log('exportToCsv called');
+    if (!this.datasetId) {
+      console.error('No dataset ID provided for export');
+      alert('Cannot export: Dataset ID is missing');
+      return;
+    }
 
-        console.log('Exporting dataset to CSV:', this.datasetId);
-        this.dataService.exportDatasetToCsv(this.datasetId).subscribe({
-          next: (blob: Blob) => {
-            // Create a download link and trigger the download
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            document.body.appendChild(a);
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `dataset_export_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-          },
-          error: (error) => {
-            console.error('Error exporting dataset:', error);
-            alert('Failed to export dataset. Please try again.');
-          }
-        });
+    console.log('Exporting dataset to CSV:', this.datasetId);
+    this.dataService.exportDatasetToCsv(this.datasetId).subscribe({
+      next: (blob: Blob) => {
+        console.log('CSV export successful, blob size:', blob.size);
+        // Create a download link and trigger the download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Use dataset name if available, otherwise use timestamp
+        const datasetName = this.dataset?.name || 'dataset';
+        const sanitizedName = datasetName.replace(/[^a-zA-Z0-9]/g, '_');
+        a.download = `${sanitizedName}.csv`;
+        
+        console.log('Downloading file as:', a.download);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      },
+      error: (error) => {
+        console.error('Error exporting dataset to CSV:', error);
+        alert('Failed to export dataset. Please try again.');
       }
+    });
+  }
+
+  /**
+   * Export the current dataset to XLSX and trigger download
+   */
+  exportToXlsx(): void {
+    console.log('exportToXlsx called');
+    if (!this.datasetId) {
+      console.error('No dataset ID provided for export');
+      alert('Cannot export: Dataset ID is missing');
+      return;
+    }
+
+    console.log('Exporting dataset to XLSX:', this.datasetId);
+    this.dataService.exportDatasetToXlsx(this.datasetId).subscribe({
+      next: (blob: Blob) => {
+        console.log('XLSX export successful, blob size:', blob.size);
+        // Create a download link and trigger the download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Use dataset name if available, otherwise use timestamp
+        const datasetName = this.dataset?.name || 'dataset';
+        const sanitizedName = datasetName.replace(/[^a-zA-Z0-9]/g, '_');
+        a.download = `${sanitizedName}.xlsx`;
+        
+        console.log('Downloading file as:', a.download);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      },
+      error: (error) => {
+        console.error('Error exporting dataset to XLSX:', error);
+        alert('Failed to export dataset. Please try again.');
+      }
+    });
+  }
+
+  /**
+   * Export the current dataset to XLS and trigger download
+   */
+  exportToXls(): void {
+    console.log('exportToXls called');
+    if (!this.datasetId) {
+      console.error('No dataset ID provided for export');
+      alert('Cannot export: Dataset ID is missing');
+      return;
+    }
+
+    console.log('Exporting dataset to XLS:', this.datasetId);
+    this.dataService.exportDatasetToXls(this.datasetId).subscribe({
+      next: (blob: Blob) => {
+        console.log('XLS export successful, blob size:', blob.size);
+        // Create a download link and trigger the download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Use dataset name if available, otherwise use timestamp
+        const datasetName = this.dataset?.name || 'dataset';
+        const sanitizedName = datasetName.replace(/[^a-zA-Z0-9]/g, '_');
+        a.download = `${sanitizedName}.xls`;
+        
+        console.log('Downloading file as:', a.download);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      },
+      error: (error) => {
+        console.error('Error exporting dataset to XLS:', error);
+        alert('Failed to export dataset. Please try again.');
+      }
+    });
+  }
+
+
 } 

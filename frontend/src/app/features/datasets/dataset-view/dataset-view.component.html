@@ -25,8 +25,35 @@
           'status-processing': dataset.status === 'PROCESSING',
           'status-error': dataset.status === 'ERROR'
         }">{{ dataset.status }}</span>
-        <div class ="d-flex justify-content-between">
-          <button class="btn btn-sm btn-secondary export-btn ms-auto mt-1" (click)="exportToCsv()">Export</button>
+        <div class="d-flex justify-content-between">
+          <div class="dropdown ms-auto mt-1">
+            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" (click)="exportToCsv(); $event.preventDefault()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export as CSV
+              </a></li>
+              <li><a class="dropdown-item" href="#" (click)="exportToXlsx(); $event.preventDefault()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export as XLSX
+              </a></li>
+              <li><a class="dropdown-item" href="#" (click)="exportToXls(); $event.preventDefault()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export as XLS
+              </a></li>
+            </ul>
+          </div>
         </div>
       </div>
       
