@@ -6,5 +6,10 @@ export default defineConfig({
   server: {
     port: 4200,
     strictPort: true,
+    // Increase limits for large file uploads
+    maxRequestBodySize: '700mb',
+    bodyParser: {
+      limit: '700mb'
+    }
   },
 });
