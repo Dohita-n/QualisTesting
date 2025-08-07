@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { debounceTime, throttleTime, takeUntil } from 'rxjs/operators';
 import { ColumnValidation } from '../../../features/datasets/dataset-view/dataset-view.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { FormsModule } from '@angular/forms';
 
 // Add interfaces for better type safety
@@ -110,7 +111,8 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
     private dataService: DataService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {}
   
   ngOnInit(): void {
@@ -245,9 +247,22 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
     });
   }
 editValue(rowIndex: number, col: string, newVal: string): void {
+  // Vérifier les permissions avant d'autoriser l'édition
+  if (!this.hasEditPermission()) {
+    this.notificationService.showError('Vous n\'avez pas les permissions nécessaires pour modifier ces données');
+    return;
+  }
+
   this.data[rowIndex][col] = newVal;
   this.data[rowIndex]._modified = true;
   this.dataChanged.emit(this.data); // Émet toutes les données de la page modifiées
+}
+
+/**
+ * Vérifie si l'utilisateur a les permissions d'édition
+ */
+private hasEditPermission(): boolean {
+  return this.authService.hasRole('EDIT_DATA') || this.authService.hasRole('ADMIN');
 }
 
 
@@ -603,6 +618,12 @@ editValue(rowIndex: number, col: string, newVal: string): void {
   // }
 
   handleDataTypeChange(columnName: string, newType: string, precision?: number, scale?: number): void {
+    // Vérifier les permissions avant d'autoriser le changement de type
+    if (!this.hasEditPermission()) {
+      this.notificationService.showError('Vous n\'avez pas les permissions nécessaires pour modifier ces données');
+      return;
+    }
+
     const column = this.columnMap.get(columnName);
     if (!column) return;
     
@@ -743,6 +764,12 @@ editValue(rowIndex: number, col: string, newVal: string): void {
   }
 
   applyChanges(): void {
+    // Vérifier les permissions avant d'autoriser l'application des changements
+    if (!this.hasEditPermission()) {
+      this.notificationService.showError('Vous n\'avez pas les permissions nécessaires pour modifier ces données');
+      return;
+    }
+
     if (!this.datasetId || this.pendingTypeChanges.size === 0) return;
     
     const changes = Array.from(this.pendingTypeChanges.values());

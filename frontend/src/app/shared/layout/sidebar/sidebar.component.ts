@@ -4,6 +4,9 @@ import { Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { CustomConfirmationService } from '../../../core/services/confirmation.service';
+import { SimpleNotificationService } from '../../../core/services/simple-notification.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 import { 
   faChartLine, 
@@ -26,7 +29,7 @@ import { UserService } from '../../../core/services/user.service';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, FontAwesomeModule],
+  imports: [CommonModule, RouterModule, FontAwesomeModule, ConfirmDialogModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
   encapsulation: ViewEncapsulation.Emulated,
@@ -57,7 +60,9 @@ export class SidebarComponent implements OnInit {
     private authService: AuthService,
     private authApiService: AuthApiService,
     private userService: UserService,
-    private router: Router 
+    private router: Router,
+    private confirmationService: CustomConfirmationService,
+    private notificationService: SimpleNotificationService
   ) {
         this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -140,18 +145,30 @@ export class SidebarComponent implements OnInit {
    * Log the user out with confirmation
    */
   logout(): void {
-    if (confirm('Are you sure you want to logout?')) {
-      this.authApiService.logout().subscribe({
-        next: () => {
-          console.log('Logged out successfully');
-          this.router.navigate(['/login']);
-        },
-        error: (error) => {
-          console.error('Logout error:', error);
-          // Still navigate to login as we've already cleared auth locally
-          this.router.navigate(['/login']);
-        }
-      });
-    }
+    this.confirmationService.confirm({
+      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      header: 'Confirmation de déconnexion',
+      icon: 'pi pi-sign-out',
+      acceptLabel: 'Déconnexion',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary'
+    }).then((confirmed) => {
+      if (confirmed) {
+        this.authApiService.logout().subscribe({
+          next: () => {
+            console.log('Logged out successfully');
+            this.notificationService.showSuccess('Déconnexion réussie', 'Au revoir !');
+            this.router.navigate(['/login']);
+          },
+          error: (error) => {
+            console.error('Logout error:', error);
+            this.notificationService.showError('Erreur lors de la déconnexion', 'Erreur');
+            // Still navigate to login as we've already cleared auth locally
+            this.router.navigate(['/login']);
+          }
+        });
+      }
+    });
   }
 }

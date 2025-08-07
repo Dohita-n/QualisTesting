@@ -11,6 +11,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 import { definePreset } from '@primeng/themes';
+import { MessageService } from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
 
 // Function to get the JWT token from local storage
 export function tokenGetter() {
@@ -63,7 +65,9 @@ export const appConfig: ApplicationConfig = {
            darkModeSelector: false || 'none'
         }
       }
-    })
+    }),
+    MessageService,
+    ConfirmationService
   ]
 };
 

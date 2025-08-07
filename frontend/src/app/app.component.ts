@@ -9,7 +9,15 @@ import { AuthService } from './core/services/auth.service';
   standalone: true,
   imports: [RouterOutlet, ToastModule],
   template: `
-    <p-toast />
+    <p-toast 
+      position="top-right" 
+      [baseZIndex]="1000"
+      [autoZIndex]="true"
+      [showTransformOptions]="'translateX(100%)'"
+      [hideTransformOptions]="'translateX(100%)'"
+      [showTransitionOptions]="'400ms ease-out'"
+      [hideTransitionOptions]="'250ms ease-in'"
+    />
     <router-outlet></router-outlet>
   `,
   styles: [],

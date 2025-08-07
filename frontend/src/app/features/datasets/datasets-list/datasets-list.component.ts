@@ -5,14 +5,17 @@ import { FormsModule } from '@angular/forms';
 import { DataService } from '../../../core/services/data.service';
 import { UtilityService } from '../../../core/services/utility.service';
 import { DatasetManagementService } from '../../../core/services/dataset-management.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { CustomConfirmationService } from '../../../core/services/confirmation.service';
 import { Dataset } from '../../../core/models/dataset.model';
 import { DatasetCardComponent } from '../../../shared/components/dataset-card/dataset-card.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { ErrorMessageComponent } from '../../../shared/components/error-message/error-message.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { Subscription } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-datasets-list',
@@ -25,9 +28,10 @@ import { ToastModule } from 'primeng/toast';
     LoadingSpinnerComponent,
     ErrorMessageComponent,
     EmptyStateComponent,
-    ToastModule
+    ToastModule,
+    ConfirmDialogModule
   ],
-  providers: [MessageService],
+
   templateUrl: './datasets-list.component.html',
   styleUrls: ['./datasets-list.component.css']
 })
@@ -60,7 +64,9 @@ export class DatasetsListComponent implements OnInit, OnDestroy {
     private router: Router,
     private utilityService: UtilityService,
     private datasetManagementService: DatasetManagementService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private notificationService: NotificationService,
+    private confirmationService: CustomConfirmationService
   ) {}
   
   ngOnInit(): void {
@@ -118,10 +124,18 @@ export class DatasetsListComponent implements OnInit, OnDestroy {
   /**
    * Handle delete dataset event
    */
-  onDeleteDataset(data: {dataset: Dataset, event: Event}): void {
+  async onDeleteDataset(data: {dataset: Dataset, event: Event}): Promise<void> {
     const { dataset } = data;
     
-    if (confirm(`Are you sure you want to delete dataset "${dataset.name}"? This action cannot be undone.`)) {
+    // Afficher un toast d'avertissement
+    this.notificationService.showWarning(
+      `Êtes-vous sûr de vouloir supprimer le dataset "${dataset.name}" ? Cette action ne peut pas être annulée.`,
+      'Confirmation de suppression',
+      { sticky: true, life: 0 }
+    );
+    
+    const confirmed = await this.confirmationService.confirmDelete(dataset.name);
+    if (confirmed) {
       this.deleteDataset(dataset.id);
     }
   }
@@ -140,6 +154,7 @@ export class DatasetsListComponent implements OnInit, OnDestroy {
           this.loadingDatasets = false;
           
           // Show success message
+          this.notificationService.showSuccess('Dataset supprimé avec succès');
           this.datasetsError = null;
           
           // Notify other components about the change
@@ -147,6 +162,7 @@ export class DatasetsListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error deleting dataset:', error);
+          this.notificationService.showError('Échec de la suppression du dataset. Veuillez réessayer.');
           this.datasetsError = 'Failed to delete dataset. Please try again.';
           this.loadingDatasets = false;
         }
@@ -273,24 +289,14 @@ export class DatasetsListComponent implements OnInit, OnDestroy {
           this.loadingDatasets = false;
           
           // Show success message
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Dataset Updated',
-            detail: `Dataset name changed to "${newName}"`,
-            life: 3000
-          });
+          this.notificationService.showInfo(`Nom du dataset mis à jour : "${newName}"`);
         },
         error: (error) => {
           console.error('Error updating dataset:', error);
           this.loadingDatasets = false;
           
           // Show error message
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Update Failed',
-            detail: 'Failed to update dataset name. Please try again.',
-            life: 3000
-          });
+          this.notificationService.showError('Échec de la mise à jour du nom du dataset. Veuillez réessayer.');
         }
       });
   }

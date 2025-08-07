@@ -8,8 +8,10 @@ import { IframeTableComponent } from '../../../core/components/iframe-table/ifra
 import { FormsModule } from '@angular/forms';
 //import { DataPreviewComponent } from '../../../features/dashboard/components/data-preview/data-preview.component';
 import { DataService } from '@app/core/services/data.service';
-import { MessageService } from 'primeng/api';
+import { SimpleNotificationService } from '../../../core/services/simple-notification.service';
+import { ConfirmationService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 // Define interfaces for validation
 export interface ValidationResult {
   validCount: number;
@@ -28,8 +30,8 @@ export interface ColumnValidation {
 @Component({
   selector: 'app-dataset-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, IframeTableComponent, FormsModule, ToastModule],
-  providers: [MessageService],
+  imports: [CommonModule, RouterModule, IframeTableComponent, FormsModule, ToastModule, ConfirmDialogModule],
+
   templateUrl: './dataset-view.component.html',
   styleUrls: ['./dataset-view.component.css']
 })
@@ -67,7 +69,7 @@ export class DatasetViewComponent implements OnInit, OnDestroy {
     private router: Router,
     private dataService: DataService,
     private utilityService: UtilityService,
-    private messageService: MessageService
+    private notificationService: SimpleNotificationService
   ) {}
 
   ngOnInit(): void {
@@ -263,22 +265,30 @@ export class DatasetViewComponent implements OnInit, OnDestroy {
   }
 
 saveDatasetRows(): void {
+  console.log('saveDatasetRows called');
+  
   if (!this.datasetId) {
-    alert('Dataset ID manquant');
+    console.log('No dataset ID, showing error');
+    this.notificationService.showError('Dataset ID manquant');
     return;
   }
 
   const modifiedRows = Array.from(this.modifiedRowsMap.values())
     .filter(row => row._modified); // Seulement les lignes réellement modifiées
 
+  console.log('Modified rows count:', modifiedRows.length);
+
   if (modifiedRows.length === 0) {
-    alert('Aucune donnée modifiée à sauvegarder.');
+    console.log('No modified rows, showing info');
+    this.notificationService.showInfo('Aucune donnée modifiée à sauvegarder.');
     return;
   }
 
+  console.log('Calling updateDatasetRows...');
   this.dataService.updateDatasetRows(this.datasetId, modifiedRows).subscribe({
     next: () => {
-      alert('Données sauvegardées avec succès !');
+      console.log('Update successful, showing success message');
+      this.notificationService.showSuccess('Modifications enregistrées avec succès');
 
       this.hasUnsavedChanges = false;
       
@@ -298,7 +308,8 @@ saveDatasetRows(): void {
       });
     },
     error: err => {
-      alert('Erreur lors de la sauvegarde : ' + err.message);
+      console.log('Update failed, showing error:', err);
+      this.notificationService.showError('Erreur lors de la sauvegarde : ' + err.message);
     }
   });
 }
@@ -415,23 +426,13 @@ loadDatasetPage(page: number): void {
       this.isLoadingValidations = false;
       this.processingMessage = 'Validation check complete (client-side only)';
       
-      // Show success toast message
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Validation Check Complete',
-        detail: 'Client-side validation check completed. Apply to save this pattern.',
-        life: 3000
-      });
+             // Show success toast message
+       this.notificationService.showInfo('Client-side validation check completed. Apply to save this pattern.', 'Validation Check Complete');
     } catch (error) {
       console.error('Invalid regular expression pattern:', error);
       this.isLoadingValidations = false;
       
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Invalid Pattern',
-        detail: 'Invalid regular expression pattern. Please check your syntax.',
-        life: 3000
-      });
+             this.notificationService.showError('Invalid regular expression pattern. Please check your syntax.', 'Invalid Pattern');
     }
   }
 
@@ -487,34 +488,19 @@ loadDatasetPage(page: number): void {
           
           this.isLoadingValidations = false;
           
-          // Show success toast message
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Validation Applied',
-            detail: `Validation pattern successfully applied to ${selectedColumn.name}`,
-            life: 3000
-          });
+                     // Show success toast message
+           this.notificationService.showSuccess(`Validation pattern successfully applied to ${selectedColumn.name}`, 'Validation Applied');
         },
         error: (error) => {
           console.error('Error validating column:', error);
           this.isLoadingValidations = false;
           
-          // Check if this is a permission error (403 Forbidden)
-          if (error.status === 403) {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Permission Denied',
-              detail: 'You need the EDIT_DATA role to apply validation patterns.',
-              life: 5000
-            });
-          } else {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Validation Error',
-              detail: 'Error validating column. Please try again.',
-              life: 3000
-            });
-          }
+                     // Check if this is a permission error (403 Forbidden)
+           if (error.status === 403) {
+             this.notificationService.showError('You need the EDIT_DATA role to apply validation patterns.', 'Permission Denied');
+           } else {
+             this.notificationService.showError('Error validating column. Please try again.', 'Validation Error');
+           }
         }
       });
       

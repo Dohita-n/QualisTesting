@@ -6,17 +6,20 @@ import { Router } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
 import { UtilityService } from '../../core/services/utility.service';
 import { DatasetManagementService } from '../../core/services/dataset-management.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { CustomConfirmationService } from '../../core/services/confirmation.service';
 import { DatasetCardComponent } from '../../shared/components/dataset-card/dataset-card.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 import { ErrorMessageComponent } from '../../shared/components/error-message/error-message.component';
-import { MessageService } from 'primeng/api';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { File as FileModel } from '../../core/models/file.model';
 import { Dataset } from '../../core/models/dataset.model';
 import { Subscription, timer, interval, of } from 'rxjs';
 import { take, switchMap, catchError, timeout, retry, delay } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,9 +32,10 @@ import { ToastModule } from 'primeng/toast';
     LoadingSpinnerComponent,
     ErrorMessageComponent,
     EmptyStateComponent,
-    ToastModule
+    ToastModule,
+    ConfirmDialogModule
   ],
-  providers: [MessageService],
+
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   encapsulation: ViewEncapsulation.Emulated
@@ -95,7 +99,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private datasetManagementService: DatasetManagementService,
     public authService: AuthService,
     private messageService: MessageService,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private notificationService: NotificationService,
+    private confirmationService: CustomConfirmationService
   ) {}
   
   ngOnInit(): void {
@@ -170,11 +176,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * Handle delete dataset event
    */
-  onDeleteDataset(data: {dataset: Dataset, event: Event}): void {
+  async onDeleteDataset(data: {dataset: Dataset, event: Event}): Promise<void> {
     // Stop event propagation to prevent viewDataset from being called
     data.event.stopPropagation();
     
-    if (confirm(`Are you sure you want to delete dataset "${data.dataset.name}"? This action cannot be undone.`)) {
+    // Afficher un toast d'avertissement
+    this.notificationService.showWarning(
+      `Êtes-vous sûr de vouloir supprimer le dataset "${data.dataset.name}" ? Cette action ne peut pas être annulée.`,
+      'Confirmation de suppression',
+      { sticky: true, life: 0 }
+    );
+    
+    // Demander confirmation à l'utilisateur avec le service de confirmation
+    const confirmed = await this.confirmationService.confirmDelete(data.dataset.name);
+    if (confirmed) {
       this.deleteDataset(data.dataset.id);
     }
   }
@@ -336,7 +351,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           
           // Show success message
+          this.notificationService.showSuccess('Dataset supprimé avec succès');
           this.errorMessage = null;
+          
           // If dataset was being previewed, hide preview
           if (this.datasetId === datasetId) {
             this.showPreview = false;
@@ -347,6 +364,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error deleting dataset:', error);
+          this.notificationService.showError('Échec de la suppression du dataset. Veuillez réessayer.');
           this.errorMessage = 'Failed to delete dataset. Please try again.';
           this.isLoading = false;
         }
@@ -471,22 +489,12 @@ onEditDataset(data: {dataset: Dataset, newName: string, event: Event}): void {
           this.userDatasets[index] = updatedDataset;
         }
         this.loadingDatasets = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Dataset Updated',
-          detail: `Dataset name changed to "${newName}"`,
-          life: 3000
-        });
+        this.notificationService.showInfo(`Nom du dataset mis à jour : "${newName}"`);
       },
       error: (error) => {
         console.error('Error updating dataset:', error);
         this.loadingDatasets = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Update Failed',
-          detail: 'Failed to update dataset name. Please try again.',
-          life: 3000
-        });
+        this.notificationService.showError('Échec de la mise à jour du nom du dataset. Veuillez réessayer.');
       }
     });
 }
