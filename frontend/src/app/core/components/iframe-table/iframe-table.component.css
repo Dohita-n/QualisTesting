@@ -9,38 +9,43 @@ table.editable-table {
   padding: 6px;
 }
 
-/* Styles pour la colonne de numérotation */
-.overflow-x-auto {
-  position: relative;
-}
-
-/* Assurer que la colonne de numérotation reste fixe */
-.sticky {
+/* Correction sticky pour la colonne de numérotation */
+th.sticky.left-0 {
   position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  background: #f9fafb; /* même couleur que l'en-tête */
+  min-width: 50px;
+  border-right: 1px solid #e5e7eb;
+  /* box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);  Optionnel, à désactiver si glitch */
 }
 
-/* Améliorer l'apparence de la colonne de numérotation */
-.sticky.left-0 {
+td.sticky.left-0 {
+  position: sticky;
   left: 0;
+  z-index: 10;
+  background: #fff; /* même couleur que le fond du tableau */
   min-width: 50px;
-  text-align: center;
+  border-right: 1px solid #e5e7eb;
+  /* box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);  Optionnel, à désactiver si glitch */
+}
+
+/* Mode sombre : adapte les couleurs */
+.dark th.sticky.left-0 {
+  background: #1f2937;
+  border-right: 1px solid #374151;
+}
+.dark td.sticky.left-0 {
+  background: #111827;
+  border-right: 1px solid #374151;
 }
 
 /* Effet de survol pour la colonne de numérotation */
-tbody tr:hover .sticky.left-0 {
+tbody tr:hover td.sticky.left-0 {
   background-color: #f3f4f6 !important;
 }
-
-.dark tbody tr:hover .sticky.left-0 {
+.dark tbody tr:hover td.sticky.left-0 {
   background-color: #374151 !important;
-}
-
-/* Assurer que la bordure droite est visible */
-.sticky.left-0.border-r {
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
-}
-
-.dark .sticky.left-0.border-r {
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.3);
 }
 
