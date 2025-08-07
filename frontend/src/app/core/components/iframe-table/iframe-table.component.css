@@ -9,9 +9,3 @@ table.editable-table {
   padding: 6px;
 }
 
-.editable-table input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  outline: none;
-}
