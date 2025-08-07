@@ -21,17 +21,19 @@
 <div class="overflow-x-auto rounded-lg shadow">
   <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700 text-sm text-left">
     <!-- En‑tête -->
-    <thead class="bg-gray-50 dark:bg-gray-800">
+    <thead>
       <tr>
         <!-- Colonne de numérotation sticky, même style que les autres th -->
         <th
-          class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-600"
+          class="px-4 py-3 text-white font-bold uppercase tracking-wider whitespace-nowrap sticky left-0 z-10 border-r border-white"
+          style="background: oklch(45% 0.085 224.283);"
         >
           #
         </th>
         <th
           *ngFor="let h of headers"
-          class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap"
+          class="px-4 py-3 text-white font-bold uppercase tracking-wider whitespace-nowrap border-r border-white"
+          style="background: oklch(45% 0.085 224.283);"
         >
           {{ h }}
         </th>
@@ -42,17 +44,18 @@
     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
       <tr
         *ngFor="let row of data; let i = index"
-        class="hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-colors"
+        class="hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-colors group"
       >
-        <!-- Cellule de numérotation sticky, même style que les autres td -->
+        <!-- Cellule de numérotation sticky, style personnalisé, insensible au hover/focus -->
         <td
-          class="px-4 py-2 sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-600 font-medium text-gray-700 dark:text-gray-200"
+          class="px-4 py-2 sticky left-0 z-10 border-r border-white font-bold text-white bg-[oklch(45%_0.085_224.283)] group-hover:!bg-[oklch(45%_0.085_224.283)] group-focus-within:!bg-[oklch(45%_0.085_224.283)]"
+          style="background: oklch(45% 0.085 224.283);"
         >
           {{ i + 1 }}
         </td>
         <td
           *ngFor="let h of headers"
-          class="px-4 py-2"
+          class="px-4 py-2 border-r border-white"
           [ngClass]="{
             'bg-yellow-200 dark:bg-yellow-400 text-black': isMatch(row[h])
           }"
