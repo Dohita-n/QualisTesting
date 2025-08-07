@@ -952,10 +952,45 @@ editValue(rowIndex: number, col: string, newVal: string): void {
           table { width: 100%; border-collapse: collapse; }
           th, td { padding: 8px; border: 1px solid #ddd; }
           th { background: #f2f2f2; }
+          
+          /* Styles for numbering column */
+          th.numbering-column {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background-color: #f2f2f2;
+            border-right: 1px solid #ddd;
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+          }
+          
+          td.numbering-column {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background-color: white;
+            border-right: 1px solid #ddd;
+            min-width: 50px;
+            text-align: center;
+            font-weight: 500;
+            color: #374151;
+          }
+          
+          /* Hover effect for numbering column */
+          tr:hover td.numbering-column {
+            background-color: #f3f4f6 !important;
+          }
+          
+          /* Ensure border is visible with shadow */
+          th.numbering-column,
+          td.numbering-column {
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+          }
         </style>
       </head>
       <body>
-        <div id="tableContainer" style="width: 100%;">
+        <div id="tableContainer" style="width: 100%; overflow-x: auto;">
           <table>
             <thead><tr>{{HEADERS}}</tr></thead>
             <tbody>{{ROWS}}</tbody>
@@ -1148,7 +1183,15 @@ editValue(rowIndex: number, col: string, newVal: string): void {
       console.warn('Generating headers without column types - they may not display correctly');
     }
     
-    return this.headers.map(header => {
+    // Add the numbering column header first
+    let headerContent = `
+      <th class="numbering-column">
+        #
+      </th>
+    `;
+    
+    // Add the rest of the headers
+    headerContent += this.headers.map(header => {
       // Get the column type, with extra logging
       const columnType = this.columnTypes[header] || 'UNKNOWN';
       if (columnType === 'UNKNOWN' && this.datasetId) {
@@ -1221,20 +1264,26 @@ editValue(rowIndex: number, col: string, newVal: string): void {
         `;
       }
     }).join('');
+    
+    return headerContent;
   }
   
   // Extract rows content generation to a separate method
   private generateRowsContent(): string {
     if (this.data.length === 0) {
-      return `<tr><td colspan="${this.headers.length}" style="text-align: center; padding: 20px;">No data available</td></tr>`;
+      return `<tr><td colspan="${this.headers.length + 1}" style="text-align: center; padding: 20px;">No data available</td></tr>`;
     }
     
     // For very large datasets, limit the initial render to improve performance
     const rowsToRender = this.isInitialRender && this.data.length > 1000 ? 
       this.data.slice(0, 1000) : this.data;
     
-    return rowsToRender.map(row => `
+    return rowsToRender.map((row, index) => `
       <tr>
+        <!-- Numbering column -->
+        <td class="numbering-column">
+          ${index + 1}
+        </td>
         ${this.headers.map(header => {
           const value = row[header] || '';
           const validationClass = this.getCellValidationClass(header, value);

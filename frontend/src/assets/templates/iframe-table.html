@@ -64,6 +64,41 @@
       overflow: visible;
     }
     
+    /* Styles for numbering column */
+    th.numbering-column {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: #f9fafb;
+      border-right: 1px solid #e5e7eb;
+      min-width: 50px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    td.numbering-column {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: white;
+      border-right: 1px solid #e5e7eb;
+      min-width: 50px;
+      text-align: center;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    /* Hover effect for numbering column */
+    tr:hover td.numbering-column {
+      background-color: #f3f4f6 !important;
+    }
+    
+    /* Ensure border is visible with shadow */
+    th.numbering-column,
+    td.numbering-column {
+      box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    }
+    
     .column-type {
       display: block;
       font-size: 12px;

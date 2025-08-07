@@ -9,3 +9,38 @@ table.editable-table {
   padding: 6px;
 }
 
+/* Styles pour la colonne de numérotation */
+.overflow-x-auto {
+  position: relative;
+}
+
+/* Assurer que la colonne de numérotation reste fixe */
+.sticky {
+  position: sticky;
+}
+
+/* Améliorer l'apparence de la colonne de numérotation */
+.sticky.left-0 {
+  left: 0;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Effet de survol pour la colonne de numérotation */
+tbody tr:hover .sticky.left-0 {
+  background-color: #f3f4f6 !important;
+}
+
+.dark tbody tr:hover .sticky.left-0 {
+  background-color: #374151 !important;
+}
+
+/* Assurer que la bordure droite est visible */
+.sticky.left-0.border-r {
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .sticky.left-0.border-r {
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
