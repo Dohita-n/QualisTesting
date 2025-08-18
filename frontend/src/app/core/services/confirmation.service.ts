@@ -35,10 +35,16 @@ export class CustomConfirmationService {
         rejectIcon: options.rejectIcon || 'pi pi-times',
         acceptButtonStyleClass: options.acceptButtonStyleClass || 'p-button-danger',
         rejectButtonStyleClass: options.rejectButtonStyleClass || 'p-button-secondary',
+        closable: true,
+        closeOnEscape: true,
+        dismissableMask: true,
+        blockScroll: true,
         accept: () => {
+          try { this.confirmationService.close(); } catch {}
           resolve(true);
         },
         reject: () => {
+          try { this.confirmationService.close(); } catch {}
           resolve(false);
         }
       });
