@@ -58,6 +58,8 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
   @Input() datasetId: string | null = '';
   @Input() userId: string | null = '';
   @Input() validationResults: { [columnId: string]: ColumnValidation } = {};
+  @Input() currentPage: number = 0;
+  @Input() pageSize: number = 200;
   @Output() typeChangesSaved = new EventEmitter<void>();
   @Output() pendingChangesUpdated = new EventEmitter<number>();
   @Output() dataChanged = new EventEmitter<any[]>();
@@ -86,6 +88,9 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
   private rowHtmlCache: {[key: string]: string} = {};
   private tableVersion: number = 0;
   private dataHash: string = '';
+  private hasNumericRowNumber: boolean = false;
+  private isZeroBasedRowNumbering: boolean = false;
+  private displayBaseRowNumber: number = 1;
   
   // Observable management
   private destroy$ = new Subject<void>();
@@ -206,6 +211,18 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
       this.dataHash = newDataHash;
       this.tableVersion++;
       this.clearCaches();
+      // Recompute row number metadata when data changes
+      this.hasNumericRowNumber = Array.isArray(this.data) && this.data.some(r => typeof r?.rowNumber === 'number' && !isNaN(r.rowNumber));
+      if (this.hasNumericRowNumber) {
+        const minRowNumber = Math.min(
+          ...this.data.map(r => (typeof r?.rowNumber === 'number' && !isNaN(r.rowNumber)) ? r.rowNumber : Number.POSITIVE_INFINITY)
+        );
+        this.isZeroBasedRowNumbering = (minRowNumber === 0);
+        this.displayBaseRowNumber = this.isZeroBasedRowNumbering ? (minRowNumber + 1) : minRowNumber;
+      } else {
+        this.isZeroBasedRowNumbering = false;
+        this.displayBaseRowNumber = 1;
+      }
     }
     
     if (changes['datasetId'] && this.datasetId && this.headers.length > 0) {
@@ -219,6 +236,15 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
       this.clearValidationCaches();
       this.generateTableHtml();
     }
+  }
+
+  getDisplayedRowNumber(rowIndex: number, row: any): number {
+    // If pagination context is provided, use it to compute global index deterministically
+    if (typeof this.pageSize === 'number' && this.pageSize > 0 && typeof this.currentPage === 'number' && this.currentPage >= 0) {
+      return this.currentPage * this.pageSize + rowIndex + 1;
+    }
+    // Fallback to detected base from server-provided rowNumber
+    return this.displayBaseRowNumber + rowIndex;
   }
 
   // Calculate a hash for the data to detect real changes
@@ -1305,11 +1331,24 @@ private hasEditPermission(): boolean {
     const rowsToRender = this.isInitialRender && this.data.length > 1000 ? 
       this.data.slice(0, 1000) : this.data;
     
+    // Determine base numbering for this render slice
+    const sliceHasNumeric = rowsToRender.some(r => typeof (r as any)?.rowNumber === 'number' && !isNaN((r as any).rowNumber));
+    const sliceMin = sliceHasNumeric ? Math.min(
+      ...rowsToRender.map(r => (typeof (r as any)?.rowNumber === 'number' && !isNaN((r as any).rowNumber)) ? (r as any).rowNumber : Number.POSITIVE_INFINITY)
+    ) : Number.POSITIVE_INFINITY;
+    const sliceIsZeroBased = sliceHasNumeric && (sliceMin === 0);
+    // Prefer pagination-based base if available, else compute from rowNumber slice
+    const paginationBase = (typeof this.pageSize === 'number' && this.pageSize > 0 && typeof this.currentPage === 'number' && this.currentPage >= 0)
+      ? (this.currentPage * this.pageSize + 1)
+      : null;
+    const computedBase = sliceHasNumeric ? (sliceIsZeroBased ? (sliceMin + 1) : sliceMin) : 1;
+    const base = paginationBase ?? computedBase;
+
     return rowsToRender.map((row, index) => `
       <tr>
         <!-- Numbering column -->
         <td class="numbering-column">
-          ${index + 1}
+          ${base + index}
         </td>
         ${this.headers.map(header => {
           const value = row[header] || '';

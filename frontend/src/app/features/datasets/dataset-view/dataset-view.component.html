@@ -207,6 +207,8 @@
           [data]="dataPreview"
           [datasetId]="datasetId"
           [validationResults]="columnValidationResults"
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
           (typeChangesSaved)="onTypeChangesSaved()"
           (pendingChangesUpdated)="updatePendingChanges($event)"
           (dataChanged)="onDataChanged($event)"
