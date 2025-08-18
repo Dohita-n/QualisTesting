@@ -236,14 +236,16 @@
         </button>
       </div>
       <div class="mt-4 flex justify-end">
-  <button
+        <button
     class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+    [class.opacity-50]="!hasUnsavedChanges"
+    [class.cursor-not-allowed]="!hasUnsavedChanges"
+    [class.hover:bg-green-600]="!hasUnsavedChanges"
     (click)="saveDatasetRows()"
-    [disabled]="!hasUnsavedChanges"
-  >
+    [disabled]="!hasUnsavedChanges">
     Save Changes
-  </button>
-</div>
+</button>
+      </div>
 
       <!-- Row Count Info -->
       <div *ngIf="!isLoading && dataPreview.length > 0" class="table-footer">
