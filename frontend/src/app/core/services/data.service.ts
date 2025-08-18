@@ -791,9 +791,6 @@ export class DataService {
   smartUploadFile(file: File, description?: string): Observable<FileModel> {
     console.log(`Uploading file: ${file.name} (${file.size} bytes)`);
     
-    // Create a subject to report progress
-    const progressSubject = new Subject<number>();
-    
     // Create an observable that will track the upload
     return new Observable<FileModel>(observer => {
       // Create form data for the upload
@@ -821,11 +818,17 @@ export class DataService {
       // Set longer timeout for large files (10 minutes)
       xhr.timeout = 600000;
       
+      // Emit initial progress
+      try { (observer as any).next({ isChunkUpload: true, uploadProgress: 0 }); } catch {}
+
       // Set up progress tracking
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const percentComplete = Math.round((event.loaded / event.total) * 100);
-          progressSubject.next(percentComplete);
+          // Emit progress updates to subscribers
+          try {
+            (observer as any).next({ isChunkUpload: true, uploadProgress: percentComplete });
+          } catch {}
         }
       };
       
@@ -871,10 +874,9 @@ export class DataService {
         }
       };
     }).pipe(
-      // Merge the progress events into the result stream
       tap(result => {
-        if (typeof result === 'number') {
-          console.log(`Upload progress: ${result}%`);
+        if ((result as any)?.isChunkUpload) {
+          console.log(`Upload progress: ${(result as any).uploadProgress}%`);
         } else {
           console.log('Upload complete:', result);
         }
