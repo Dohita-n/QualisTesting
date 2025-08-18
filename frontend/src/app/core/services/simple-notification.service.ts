@@ -17,7 +17,7 @@ export class SimpleNotificationService {
   /**
    * Affiche un message de succès
    */
-  showSuccess(message: string, title: string = 'Succès', options: NotificationOptions = {}): void {
+  showSuccess(message: string, title: string = 'Success', options: NotificationOptions = {}): void {
     this.showNotification('success', title, message, options);
   }
 

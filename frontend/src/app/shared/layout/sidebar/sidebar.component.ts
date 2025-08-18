@@ -144,13 +144,13 @@ export class SidebarComponent implements OnInit {
   /**
    * Log the user out with confirmation
    */
-  logout(): void {
+logout(): void {
     this.confirmationService.confirm({
-      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
-      header: 'Confirmation de déconnexion',
+      message: 'Are you sure you want to log out?',
+      header: 'Logout Confirmation',
       icon: 'pi pi-sign-out',
-      acceptLabel: 'Déconnexion',
-      rejectLabel: 'Annuler',
+      acceptLabel: 'Log Out',
+      rejectLabel: 'Cancel',
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-secondary'
     }).then((confirmed) => {
@@ -158,17 +158,17 @@ export class SidebarComponent implements OnInit {
         this.authApiService.logout().subscribe({
           next: () => {
             console.log('Logged out successfully');
-            this.notificationService.showSuccess('Déconnexion réussie', 'Au revoir !');
+            this.notificationService.showSuccess('Successfully logged out', 'Goodbye!');
             this.router.navigate(['/login']);
           },
           error: (error) => {
             console.error('Logout error:', error);
-            this.notificationService.showError('Erreur lors de la déconnexion', 'Erreur');
+            this.notificationService.showError('Error during logout', 'Error');
             // Still navigate to login as we've already cleared auth locally
             this.router.navigate(['/login']);
           }
         });
       }
     });
-  }
+}
 }

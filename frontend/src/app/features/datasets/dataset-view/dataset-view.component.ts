@@ -288,7 +288,7 @@ saveDatasetRows(): void {
   this.dataService.updateDatasetRows(this.datasetId, modifiedRows).subscribe({
     next: () => {
       console.log('Update successful, showing success message');
-      this.notificationService.showSuccess('Modifications enregistrées avec succès');
+      this.notificationService.showSuccess('Changes saved successfully');
 
       this.hasUnsavedChanges = false;
       

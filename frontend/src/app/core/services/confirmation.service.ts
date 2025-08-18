@@ -55,16 +55,17 @@ export class CustomConfirmationService {
    * Affiche une confirmation de suppression
    */
   confirmDelete(itemName: string): Promise<boolean> {
-    return this.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer "${itemName}" ? Cette action ne peut pas être annulée.`,
-      header: 'Confirmation de suppression',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Supprimer',
-      rejectLabel: 'Annuler',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-secondary'
-    });
+      return this.confirm({
+        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+        header: 'Delete Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Delete',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-danger',
+        rejectButtonStyleClass: 'p-button-secondary'
+      });
   }
+
 
   /**
    * Affiche une confirmation d'action critique
