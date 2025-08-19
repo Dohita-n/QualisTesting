@@ -32,9 +32,39 @@
         </th>
         <th
           *ngFor="let h of headers"
-          class="px-4 py-3 text-gray-700 dark:text-gray-200 uppercase tracking-wider whitespace-nowrap border-r border-white"
+          class="px-4 py-2 align-top text-gray-700 dark:text-gray-200 whitespace-nowrap border-r border-white"
         >
-          {{ h }}
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="font-bold">{{ h }}</span>
+              <!-- Badge type -->
+              <span
+                class="cursor-pointer"
+                [ngClass]="typeBadgeClass(columnTypes[h])"
+                (click)="toggleTypeMenu(h, $event)"
+                title="Changer le type"
+              >{{ columnTypes[h] || 'UNKNOWN' }}</span>
+              <!-- Type mini-menu -->
+              <div *ngIf="openTypeMenu === h" class="menu" (click)="$event.stopPropagation()">
+                <button *ngFor="let t of availableDataTypes" class="menu-item" (click)="changeTypeFromBadge(h, t)">{{ t }}</button>
+              </div>
+            </div>
+            <!-- Kebab menu -->
+            <button class="icon-btn" title="Options colonne" (click)="toggleHeaderMenu(h, $event)">
+              ⋮
+            </button>
+            <div *ngIf="openHeaderMenu === h" class="menu" (click)="$event.stopPropagation()">
+              <button class="menu-item" (click)="promptRename(h)">Renommer la colonne</button>
+              <button class="menu-item" (click)="promptInsertAfter(h)">Insérer une nouvelle colonne</button>
+              <button class="menu-item danger" (click)="confirmDelete(h)">Supprimer la colonne</button>
+            </div>
+          </div>
+          <!-- Section 2: barre de validation -->
+          <div class="val-bar" *ngIf="getValidationForHeader(h).total > 0">
+            <div class="seg seg-valid" [style.width.%]="getValidPercent(h)" [title]="getSegmentTooltip(h,'valid')"></div>
+            <div class="seg seg-invalid" [style.width.%]="getInvalidPercent(h)" [title]="getSegmentTooltip(h,'invalid')"></div>
+            <div class="seg seg-empty" [style.width.%]="getEmptyPercent(h)" [title]="getSegmentTooltip(h,'empty')"></div>
+          </div>
         </th>
       </tr>
     </thead>
@@ -54,10 +84,12 @@
         </td>
         <td
           *ngFor="let h of headers"
-          class="px-4 py-2 border-r border-white"
+          class="px-4 py-2 border-r border-white relative"
           [ngClass]="{
-            'bg-yellow-200 dark:bg-yellow-400 text-black': isMatch(row[h])
+            'bg-yellow-200 dark:bg-yellow-400 text-black': isMatch(row[h]),
+            'cell-invalid': getCellValidationClass(h, row[h]) === 'invalid-value'
           }"
+          [attr.title]="getCellTooltip(h, row[h])"
         >
           <input
             class="min-w-[45px] w-full bg-transparent border border-transparent rounded-md px-2 py-1
@@ -66,6 +98,7 @@
             [value]="row[h]"
             (input)="editValue(i, h, $any($event.target).value)"
           />
+          <span *ngIf="getCellValidationClass(h, row[h]) === 'invalid-value'" class="invalid-dot" title="{{ getCellTooltip(h, row[h]) }}"></span>
         </td>
       </tr>
     </tbody>

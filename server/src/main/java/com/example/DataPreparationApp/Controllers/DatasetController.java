@@ -4,10 +4,12 @@ import com.example.DataPreparationApp.Model.Dataset;
 import com.example.DataPreparationApp.Model.DatasetColumn;
 import com.example.DataPreparationApp.Model.DatasetRow;
 import com.example.DataPreparationApp.Model.User;
+import com.example.DataPreparationApp.Repository.DatasetColumnStatisticsRepository;
 import com.example.DataPreparationApp.Repository.DatasetColumnRepository;
 import com.example.DataPreparationApp.Repository.DatasetRepository;
 import com.example.DataPreparationApp.Repository.DatasetRowRepository;
 import com.example.DataPreparationApp.Services.AuthorizationService;
+import com.example.DataPreparationApp.Services.ValidationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 //DatasetController its purpose relies on manages dataset operations after files are processed
 //List dataset files, view their details across columns and rows
@@ -34,16 +37,25 @@ public class DatasetController extends BaseController {
     private final DatasetRepository datasetRepository;
     private final DatasetColumnRepository datasetColumnRepository;
     private final DatasetRowRepository datasetRowRepository;
+    private final DatasetColumnStatisticsRepository datasetColumnStatisticsRepository;
+    private final ValidationService validationService;
+    private final JdbcTemplate jdbcTemplate;
 
     public DatasetController(
             DatasetRepository datasetRepository,
             DatasetColumnRepository datasetColumnRepository,
             DatasetRowRepository datasetRowRepository,
+            DatasetColumnStatisticsRepository datasetColumnStatisticsRepository,
+            ValidationService validationService,
+            JdbcTemplate jdbcTemplate,
             AuthorizationService authorizationService) {
         super(authorizationService);
         this.datasetRepository = datasetRepository;
         this.datasetColumnRepository = datasetColumnRepository;
         this.datasetRowRepository = datasetRowRepository;
+        this.datasetColumnStatisticsRepository = datasetColumnStatisticsRepository;
+        this.validationService = validationService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
@@ -213,6 +225,7 @@ public class DatasetController extends BaseController {
 
         ObjectMapper mapper = new ObjectMapper();
 
+        java.util.Set<String> touchedColumns = new java.util.HashSet<>();
         for (Map<String, Object> row : updatedRows) {
             UUID rowId = null;
             if (row.containsKey("id") && row.get("id") != null) {
@@ -238,8 +251,249 @@ public class DatasetController extends BaseController {
             }
 
             datasetRowRepository.save(datasetRow);
+
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                String key = entry.getKey();
+                if (!"id".equalsIgnoreCase(key) && !"rowNumber".equalsIgnoreCase(key) && !"_modified".equalsIgnoreCase(key)) {
+                    touchedColumns.add(key);
+                }
+            }
+        }
+
+        // Recompute validation stats for touched columns
+        List<DatasetColumn> columns = datasetColumnRepository.findByDatasetOrderByPosition(dataset);
+        for (DatasetColumn col : columns) {
+            if (!touchedColumns.contains(col.getName())) continue;
+            String pattern = datasetColumnStatisticsRepository.findByDatasetColumn(col)
+                    .map(s -> s.getValidationPattern())
+                    .orElse(null);
+            if (pattern == null || pattern.isEmpty()) {
+                pattern = defaultPattern(col);
+            }
+            try { validationService.validateColumn(col, pattern); } catch (Exception ignored) {}
         }
 
         return ResponseEntity.ok("Rows updated");
+    }
+
+    private String defaultPattern(DatasetColumn column) {
+        if (column.getInferredDataType() == null) return "^.+$";
+        switch (column.getInferredDataType()) {
+            case INTEGER: return "^[-+]?\\d+$";
+            case FLOAT:
+            case DECIMAL: return "^[-+]?\\d*\\.?\\d+$";
+            case DATE: return "^(?:\\d{4}[-/]\\d{1,2}[-/]\\d{1,2}|\\d{1,2}[-/]\\d{1,2}[-/]\\d{4})$";
+            case BOOLEAN: return "^(true|false|yes|f|t|no|0|1)$";
+            case STRING:
+            default: return "^.+$";
+        }
+    }
+
+    // ---------------- Column management endpoints ----------------
+
+    @PutMapping("/{id}/columns/{columnId}/rename")
+    @PreAuthorize("hasAnyAuthority('EDIT_DATA', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<DatasetColumn> renameColumn(
+            @PathVariable UUID id,
+            @PathVariable UUID columnId,
+            @RequestParam UUID userId,
+            @RequestBody Map<String, String> body) throws Exception {
+
+        DatasetColumn updated = executeOperation(() -> {
+            Dataset dataset = datasetRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + id));
+            checkDatasetAccess(userId, dataset);
+
+            DatasetColumn column = datasetColumnRepository.findById(columnId)
+                    .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
+            if (!column.getDataset().getId().equals(id)) {
+                throw new IllegalArgumentException("Column does not belong to the specified dataset");
+            }
+
+            String newName = body.get("name");
+            if (newName == null || newName.trim().isEmpty()) {
+                throw new IllegalArgumentException("New column name is required");
+            }
+
+            String oldName = column.getName();
+            column.setName(newName.trim());
+            DatasetColumn saved = datasetColumnRepository.save(column);
+
+            // Rename key in JSONB data for all rows
+            String sql = "UPDATE dataset_rows SET data = (data - ?) || jsonb_build_object(?, data->?) WHERE dataset_id = ?";
+            jdbcTemplate.update(sql, oldName, newName, oldName, id);
+
+            // Clear validation caches
+            validationService.clearDatasetValidationCache(id);
+
+            return saved;
+        });
+
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/columns")
+    @PreAuthorize("hasAnyAuthority('EDIT_DATA', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<DatasetColumn> createColumn(
+            @PathVariable UUID id,
+            @RequestParam UUID userId,
+            @RequestBody Map<String, Object> body) throws Exception {
+
+        DatasetColumn created = executeOperation(() -> {
+            Dataset dataset = datasetRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + id));
+            checkDatasetAccess(userId, dataset);
+
+            String name = (String) body.get("name");
+            if (name == null || name.trim().isEmpty()) {
+                throw new IllegalArgumentException("Column name is required");
+            }
+
+            Integer position = body.get("position") != null ? Integer.valueOf(body.get("position").toString()) : null;
+            String typeStr = body.get("type") != null ? body.get("type").toString() : "STRING";
+            Integer precision = body.get("decimalPrecision") != null ? Integer.valueOf(body.get("decimalPrecision").toString()) : null;
+            Integer scale = body.get("decimalScale") != null ? Integer.valueOf(body.get("decimalScale").toString()) : null;
+
+            // Determine insert position
+            List<DatasetColumn> columns = datasetColumnRepository.findByDatasetOrderByPosition(dataset);
+            int insertPos = (position != null && position >= 0 && position <= columns.size()) ? position : columns.size();
+
+            // Shift positions for columns at or after insert position
+            for (DatasetColumn c : columns) {
+                if (c.getPosition() >= insertPos) {
+                    c.setPosition(c.getPosition() + 1);
+                    datasetColumnRepository.save(c);
+                }
+            }
+
+            // Create new column
+            DatasetColumn newCol = DatasetColumn.builder()
+                    .dataset(dataset)
+                    .name(name.trim())
+                    .position(insertPos)
+                    .inferredDataType(parseDataType(typeStr))
+                    .decimalPrecision(precision)
+                    .decimalScale(scale)
+                    .build();
+            DatasetColumn saved = datasetColumnRepository.save(newCol);
+
+            // Add empty values for this key to all rows
+            String sql = "UPDATE dataset_rows SET data = data || jsonb_build_object(?, '') WHERE dataset_id = ?";
+            jdbcTemplate.update(sql, name, id);
+
+            // Clear validation cache
+            validationService.clearDatasetValidationCache(id);
+
+            return saved;
+        });
+
+        return ResponseEntity.ok(created);
+    }
+
+    @DeleteMapping("/{id}/columns/{columnId}")
+    @PreAuthorize("hasAnyAuthority('DELETE_DATA', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deleteColumn(
+            @PathVariable UUID id,
+            @PathVariable UUID columnId,
+            @RequestParam UUID userId) throws Exception {
+
+        Map<String, Object> response = executeOperation(() -> {
+            Dataset dataset = datasetRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + id));
+            checkDatasetAccess(userId, dataset);
+
+            DatasetColumn column = datasetColumnRepository.findById(columnId)
+                    .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
+            if (!column.getDataset().getId().equals(id)) {
+                throw new IllegalArgumentException("Column does not belong to the specified dataset");
+            }
+
+            String colName = column.getName();
+            int removedPos = column.getPosition();
+
+            // Remove statistics for this column
+            datasetColumnStatisticsRepository.deleteAllByDatasetColumnId(columnId);
+
+            // Delete column entity
+            datasetColumnRepository.delete(column);
+
+            // Shift positions down
+            List<DatasetColumn> columns = datasetColumnRepository.findByDatasetOrderByPosition(dataset);
+            for (DatasetColumn c : columns) {
+                if (c.getPosition() > removedPos) {
+                    c.setPosition(c.getPosition() - 1);
+                    datasetColumnRepository.save(c);
+                }
+            }
+
+            // Remove key from JSONB data
+            String sql = "UPDATE dataset_rows SET data = (data - ?) WHERE dataset_id = ?";
+            jdbcTemplate.update(sql, colName, id);
+
+            // Clear validation cache
+            validationService.clearDatasetValidationCache(id);
+
+            return Map.of("deleted", true, "columnId", columnId.toString());
+        });
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/columns/{columnId}/type")
+    @PreAuthorize("hasAnyAuthority('EDIT_DATA', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<DatasetColumn> updateColumnType(
+            @PathVariable UUID id,
+            @PathVariable UUID columnId,
+            @RequestParam UUID userId,
+            @RequestBody Map<String, Object> body) throws Exception {
+
+        DatasetColumn updated = executeOperation(() -> {
+            Dataset dataset = datasetRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Dataset not found with id: " + id));
+            checkDatasetAccess(userId, dataset);
+
+            DatasetColumn column = datasetColumnRepository.findById(columnId)
+                    .orElseThrow(() -> new IllegalArgumentException("Column not found with id: " + columnId));
+            if (!column.getDataset().getId().equals(id)) {
+                throw new IllegalArgumentException("Column does not belong to the specified dataset");
+            }
+
+            String typeStr = body.get("type") != null ? body.get("type").toString() : null;
+            if (typeStr == null) {
+                throw new IllegalArgumentException("Type is required");
+            }
+            column.setInferredDataType(parseDataType(typeStr));
+            if (column.getInferredDataType() == DatasetColumn.DataType.DECIMAL) {
+                Integer precision = body.get("decimalPrecision") != null ? Integer.valueOf(body.get("decimalPrecision").toString()) : column.getDecimalPrecision();
+                Integer scale = body.get("decimalScale") != null ? Integer.valueOf(body.get("decimalScale").toString()) : column.getDecimalScale();
+                column.setDecimalPrecision(precision);
+                column.setDecimalScale(scale);
+            } else {
+                column.setDecimalPrecision(null);
+                column.setDecimalScale(null);
+            }
+
+            DatasetColumn saved = datasetColumnRepository.save(column);
+
+            // Reset stats for this column to force recomputation with default pattern
+            datasetColumnStatisticsRepository.deleteAllByDatasetColumnId(columnId);
+            validationService.clearValidationCache(columnId);
+
+            return saved;
+        });
+
+        return ResponseEntity.ok(updated);
+    }
+
+    private DatasetColumn.DataType parseDataType(String typeStr) {
+        try {
+            return DatasetColumn.DataType.valueOf(typeStr.toUpperCase());
+        } catch (Exception e) {
+            return DatasetColumn.DataType.STRING;
+        }
     }
 }

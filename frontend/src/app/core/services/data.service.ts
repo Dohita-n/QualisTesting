@@ -373,6 +373,119 @@ export class DataService {
       tap(columns => console.log('Dataset columns retrieved', columns))
     );
   }
+
+  /**
+   * Rename a column
+   */
+  renameColumn(datasetId: string, columnId: string, newName: string): Observable<DatasetColumn> {
+    const url = `${this.apiUrl}/datasets/${datasetId}/columns/${columnId}/rename`;
+    const params = this.createUserParams();
+    if (!params) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    return this.http.put<DatasetColumn>(url, { name: newName }, { params, headers }).pipe(
+      tap(res => console.log('Column renamed', res)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Insert a new column
+   */
+  createColumn(datasetId: string, name: string, position?: number, type?: string, decimalPrecision?: number, decimalScale?: number): Observable<DatasetColumn> {
+    const url = `${this.apiUrl}/datasets/${datasetId}/columns`;
+    const params = this.createUserParams();
+    if (!params) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    const body: any = { name };
+    if (position !== undefined) body.position = position;
+    if (type) body.type = type;
+    if (decimalPrecision !== undefined) body.decimalPrecision = decimalPrecision;
+    if (decimalScale !== undefined) body.decimalScale = decimalScale;
+
+    return this.http.post<DatasetColumn>(url, body, { params, headers }).pipe(
+      tap(res => console.log('Column created', res)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Delete a column
+   */
+  deleteColumn(datasetId: string, columnId: string): Observable<any> {
+    const url = `${this.apiUrl}/datasets/${datasetId}/columns/${columnId}`;
+    const params = this.createUserParams();
+    if (!params) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    return this.http.delete<any>(url, { params, headers }).pipe(
+      tap(res => console.log('Column deleted', res)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Update column type
+   */
+  updateColumnType(datasetId: string, columnId: string, type: string, decimalPrecision?: number, decimalScale?: number): Observable<DatasetColumn> {
+    const url = `${this.apiUrl}/datasets/${datasetId}/columns/${columnId}/type`;
+    const params = this.createUserParams();
+    if (!params) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    const body: any = { type };
+    if (decimalPrecision !== undefined) body.decimalPrecision = decimalPrecision;
+    if (decimalScale !== undefined) body.decimalScale = decimalScale;
+
+    return this.http.put<DatasetColumn>(url, body, { params, headers }).pipe(
+      tap(res => console.log('Column type updated', res)),
+      catchError(this.handleError)
+    );
+  }
   
   
   getDatasetRows(datasetId: string, page: number = 0, size: number = 200): Observable<{ 

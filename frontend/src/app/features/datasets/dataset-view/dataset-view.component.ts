@@ -222,6 +222,24 @@ export class DatasetViewComponent implements OnInit, OnDestroy {
     }
   }
 
+  refreshColumnsAndValidations(): void {
+    if (!this.datasetId) return;
+    this.isLoading = true;
+    this.dataService.getDatasetColumns(this.datasetId).subscribe({
+      next: (columns) => {
+        this.datasetColumns = columns;
+        this.dataPreviewHeaders = columns.map(c => c.name);
+        this.isLoading = false;
+        // Reload validations for progress bars and cell indicators
+        this.loadColumnValidations();
+      },
+      error: (e) => {
+        console.error('Error refreshing columns', e);
+        this.isLoading = false;
+      }
+    });
+  }
+
   /**
    * Auto-generate validation pattern based on column data type
    */

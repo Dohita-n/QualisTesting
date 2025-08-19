@@ -49,3 +49,82 @@ tbody tr:hover td.sticky.left-0 {
   background-color: #374151 !important;
 }
 
+/* Header type badges */
+.type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+.type-badge.string { background-color: #e6f9ed; color: #065f46; border-color: #a7f3d0; }
+.type-badge.number { background-color: #e6f0ff; color: #1e40af; border-color: #bfdbfe; }
+.type-badge.date { background-color: #efe6ff; color: #5b21b6; border-color: #ddd6fe; }
+.type-badge.boolean { background-color: #fff7ed; color: #b45309; border-color: #fed7aa; }
+.type-badge.unknown { background-color: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+
+/* Kebab icon button */
+.icon-btn { 
+  background: transparent; 
+  border: none; 
+  line-height: 1; 
+  padding: 2px 6px; 
+  cursor: pointer; 
+  border-radius: 4px;
+}
+.icon-btn:hover { background: rgba(0,0,0,0.06); }
+
+/* Simple dropdown menu */
+.menu {
+  position: absolute;
+  margin-top: 4px;
+  right: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  padding: 6px;
+  z-index: 20;
+}
+.menu .menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.menu .menu-item:hover { background: #f3f4f6; }
+.menu .menu-item.danger { color: #b91c1c; }
+.menu .menu-item.danger:hover { background: #fee2e2; }
+
+/* Validation progress bar */
+.val-bar {
+  display: flex;
+  height: 6px;
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 6px;
+  background: #f3f4f6;
+}
+.val-bar .seg { height: 100%; }
+.val-bar .seg-valid { background: #10b981; }
+.val-bar .seg-invalid { background: #f59e0b; }
+.val-bar .seg-empty { background: #e5e7eb; }
+
+/* Invalid cell indicator */
+.cell-invalid { position: relative; }
+.invalid-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+

@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                 // Dataset endpoints with different permissions based on operation
                 .requestMatchers(HttpMethod.GET, "/api/datasets/**").hasAnyAuthority("VIEW_DATA", "EDIT_DATA", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/datasets/**").hasAnyAuthority("UPLOAD_DATA", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/datasets/**").hasAnyAuthority("UPLOAD_DATA", "EDIT_DATA", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/datasets/**").hasAnyAuthority("EDIT_DATA", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/datasets/**").hasAnyAuthority("DELETE_DATA", "ADMIN")
                 // File upload endpoints

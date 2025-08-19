@@ -22,6 +22,7 @@ interface ColumnMetadata {
   inferredDataType: string;
   decimalPrecision?: number;
   decimalScale?: number;
+  position?: number;
 }
 
 interface ValidationStats {
@@ -64,6 +65,7 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
   @Output() pendingChangesUpdated = new EventEmitter<number>();
   @Output() dataChanged = new EventEmitter<any[]>();
   @Output() rowModified = new EventEmitter<any>();
+  @Output() columnsChanged = new EventEmitter<void>();
 
 
   
@@ -81,6 +83,8 @@ export class IframeTableComponent implements OnChanges, OnInit, AfterViewInit, O
   activeColumn: string = '';
   scrollX: number = 0;
   scrollY: number = 0;
+  openHeaderMenu: string = '';
+  openTypeMenu: string = '';
   
   // Cache-related properties
   private templateCache: {[key: string]: string} = {};
@@ -576,7 +580,8 @@ private hasEditPermission(): boolean {
         name: col.name,
         inferredDataType: col.dataType || col.inferredDataType || 'UNKNOWN',
         decimalPrecision: col.decimalPrecision,
-        decimalScale: col.decimalScale
+        decimalScale: col.decimalScale,
+        position: col.position
       }
     ]));
   }
@@ -1124,6 +1129,147 @@ private hasEditPermission(): boolean {
       console.error(`Invalid regex pattern for column ${columnName}:`, e);
       return '';
     }
+  }
+
+  // Angular template helpers for validation progress bar
+  getValidationForHeader(columnName: string): { valid: number, invalid: number, empty: number, total: number } {
+    const col = this.columnMap.get(columnName);
+    if (!col || !col.id || !this.validationResults || !this.validationResults[col.id]) {
+      return { valid: 0, invalid: 0, empty: 0, total: 0 };
+    }
+    const res = this.validationResults[col.id].result;
+    const total = (res?.validCount || 0) + (res?.invalidCount || 0) + (res?.emptyCount || 0);
+    return { valid: res?.validCount || 0, invalid: res?.invalidCount || 0, empty: res?.emptyCount || 0, total };
+  }
+
+  getValidPercent(columnName: string): number {
+    const v = this.getValidationForHeader(columnName);
+    return v.total > 0 ? (v.valid / v.total) * 100 : 0;
+  }
+
+  getInvalidPercent(columnName: string): number {
+    const v = this.getValidationForHeader(columnName);
+    return v.total > 0 ? (v.invalid / v.total) * 100 : 0;
+  }
+
+  getEmptyPercent(columnName: string): number {
+    const v = this.getValidationForHeader(columnName);
+    return v.total > 0 ? (v.empty / v.total) * 100 : 0;
+  }
+
+  getSegmentTooltip(columnName: string, kind: 'valid'|'invalid'|'empty'): string {
+    const v = this.getValidationForHeader(columnName);
+    const p = kind === 'valid' ? this.getValidPercent(columnName) : kind === 'invalid' ? this.getInvalidPercent(columnName) : this.getEmptyPercent(columnName);
+    const label = kind === 'valid' ? '✅ Valides' : kind === 'invalid' ? '⚠️ Invalides' : '⬜ Vides';
+    const count = kind === 'valid' ? v.valid : kind === 'invalid' ? v.invalid : v.empty;
+    return `${label} : ${p.toFixed(1)}% (${count}/${v.total})`;
+  }
+
+  // Header menu actions
+  toggleHeaderMenu(columnName: string, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.openHeaderMenu = this.openHeaderMenu === columnName ? '' : columnName;
+    this.openTypeMenu = '';
+  }
+
+  toggleTypeMenu(columnName: string, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.openTypeMenu = this.openTypeMenu === columnName ? '' : columnName;
+    this.openHeaderMenu = '';
+  }
+
+  typeBadgeClass(type: string | undefined): string {
+    switch ((type || '').toUpperCase()) {
+      case 'STRING': return 'type-badge string';
+      case 'INTEGER':
+      case 'FLOAT':
+      case 'DECIMAL': return 'type-badge number';
+      case 'DATE': return 'type-badge date';
+      case 'BOOLEAN': return 'type-badge boolean';
+      default: return 'type-badge unknown';
+    }
+  }
+
+  promptRename(columnName: string): void {
+    const col = this.columnMap.get(columnName);
+    if (!col || !this.datasetId) return;
+    const newName = window.prompt('Nouveau nom de la colonne', columnName);
+    if (!newName || newName.trim() === '' || newName === columnName) return;
+    this.dataService.renameColumn(this.datasetId, col.id, newName.trim()).subscribe({
+      next: () => {
+        this.openHeaderMenu = '';
+        this.columnsChanged.emit();
+      },
+      error: (e) => {
+        console.error('Rename failed', e);
+        this.notificationService.showError('Échec du renommage de la colonne');
+      }
+    });
+  }
+
+  promptInsertAfter(columnName: string): void {
+    const col = this.columnMap.get(columnName);
+    if (!col || !this.datasetId) return;
+    const name = window.prompt('Nom de la nouvelle colonne');
+    if (!name || name.trim() === '') return;
+    const position = (col.position ?? 0) + 1;
+    this.dataService.createColumn(this.datasetId, name.trim(), position, 'STRING').subscribe({
+      next: () => {
+        this.openHeaderMenu = '';
+        this.columnsChanged.emit();
+      },
+      error: (e) => {
+        console.error('Create column failed', e);
+        this.notificationService.showError('Échec de la création de la colonne');
+      }
+    });
+  }
+
+  confirmDelete(columnName: string): void {
+    const col = this.columnMap.get(columnName);
+    if (!col || !this.datasetId) return;
+    if (!window.confirm(`Supprimer la colonne "${columnName}" ?`)) return;
+    this.dataService.deleteColumn(this.datasetId, col.id).subscribe({
+      next: () => {
+        this.openHeaderMenu = '';
+        this.columnsChanged.emit();
+      },
+      error: (e) => {
+        console.error('Delete column failed', e);
+        this.notificationService.showError('Échec de la suppression de la colonne');
+      }
+    });
+  }
+
+  changeTypeFromBadge(columnName: string, newType: string): void {
+    const col = this.columnMap.get(columnName);
+    if (!col || !this.datasetId) return;
+    // Reuse existing handler to keep pending change behavior as-is
+    this.handleDataTypeChange(columnName, newType);
+    // Optionally persist immediately via endpoint
+    this.dataService.updateColumnType(this.datasetId, col.id, newType).subscribe({
+      next: () => {
+        this.openTypeMenu = '';
+        this.columnsChanged.emit();
+      },
+      error: (e) => {
+        console.error('Update type failed', e);
+        this.notificationService.showError('Échec du changement de type');
+      }
+    });
+  }
+
+  getCellTooltip(columnName: string, value: any): string {
+    const cls = this.getCellValidationClass(columnName, value);
+    if (cls === 'empty-value') {
+      return 'Valeur vide';
+    }
+    if (cls === 'invalid-value') {
+      const t = (this.columnTypes[columnName] || '').toUpperCase();
+      const expected = t === 'INTEGER' || t === 'FLOAT' || t === 'DECIMAL' ? 'un nombre' : t === 'DATE' ? 'une date' : t === 'BOOLEAN' ? 'un booléen' : 'une chaîne';
+      return `Valeur invalide, attendu ${expected}`;
+    }
+    return '';
   }
 
   // Modify the clearValidationCaches method
