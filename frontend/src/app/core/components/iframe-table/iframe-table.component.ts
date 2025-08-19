@@ -1061,7 +1061,7 @@ private hasEditPermission(): boolean {
   }
 
   // Optimize the validation method with better caching
-  private getCellValidationClass(columnName: string, value: any): string {
+  getCellValidationClass(columnName: string, value: any): string {
     // Skip validation during initial render for large datasets
     if (this.isInitialRender && this.data.length > this.LARGE_DATASET_THRESHOLD) {
       return '';
