@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { UtilityService } from '../../../core/services/utility.service';
@@ -151,6 +151,18 @@ export class DatasetViewComponent implements OnInit, OnDestroy {
     });
     
     this.subscriptions.push(paramsSub);
+  }
+
+  // Keyboard shortcut: Ctrl+S / Cmd+S to save changes (scoped to this component)
+  @HostListener('window:keydown', ['$event'])
+  onGlobalKeyDown(event: KeyboardEvent): void {
+    const isSaveCombo = (event.ctrlKey || event.metaKey) && (event.key?.toLowerCase() === 's');
+    if (!isSaveCombo) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.hasUnsavedChanges && !this.isLoading) {
+      this.saveDatasetRows();
+    }
   }
 
   ngOnDestroy(): void {
