@@ -327,6 +327,15 @@ public class DatasetController extends BaseController {
             // Clear validation caches
             validationService.clearDatasetValidationCache(id);
 
+            // Recalculate stats for this column using existing or default pattern
+            String pattern = datasetColumnStatisticsRepository.findByDatasetColumn(saved)
+                    .map(s -> s.getValidationPattern())
+                    .orElse(null);
+            if (pattern == null || pattern.isEmpty()) {
+                pattern = defaultPattern(saved);
+            }
+            try { validationService.validateColumn(saved, pattern); } catch (Exception ignored) {}
+
             return saved;
         });
 
@@ -385,6 +394,10 @@ public class DatasetController extends BaseController {
 
             // Clear validation cache
             validationService.clearDatasetValidationCache(id);
+
+            // Compute initial stats (will be mostly emptyCount)
+            String pattern = defaultPattern(saved);
+            try { validationService.validateColumn(saved, pattern); } catch (Exception ignored) {}
 
             return saved;
         });
@@ -482,6 +495,10 @@ public class DatasetController extends BaseController {
             // Reset stats for this column to force recomputation with default pattern
             datasetColumnStatisticsRepository.deleteAllByDatasetColumnId(columnId);
             validationService.clearValidationCache(columnId);
+
+            // Recalculate stats using default pattern for new type
+            String pattern = defaultPattern(saved);
+            try { validationService.validateColumn(saved, pattern); } catch (Exception ignored) {}
 
             return saved;
         });

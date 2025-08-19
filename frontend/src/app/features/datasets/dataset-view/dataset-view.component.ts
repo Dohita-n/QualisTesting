@@ -211,27 +211,8 @@ export class DatasetViewComponent implements OnInit, OnDestroy {
   onTypeChangesSaved(): void {
     // Reset pending changes count
     this.pendingTypeChanges = 0;
-    
-    // Refresh column data after type changes are applied
-    if (this.datasetId) {
-      this.isLoading = true;
-      this.dataService.getDatasetColumns(this.datasetId).subscribe({
-        next: (columns) => {
-          this.datasetColumns = columns; // Update columns with new types
-          this.isLoading = false;
-          
-          // Show success message
-          this.processingMessage = 'Data types updated successfully';
-          setTimeout(() => {
-            this.processingMessage = 'Dataset loaded successfully.';
-          }, 3000);
-        },
-        error: (error) => {
-          console.error('Error refreshing columns after type change:', error);
-          this.isLoading = false;
-        }
-      });
-    }
+    // Refresh columns and validations to reflect new types and stats
+    this.refreshColumnsAndValidations();
   }
 
   refreshColumnsAndValidations(): void {
@@ -336,6 +317,9 @@ saveDatasetRows(): void {
         }
         return row;
       });
+
+      // Recharger les validations afin de mettre à jour les barres et les indicateurs
+      this.loadColumnValidations();
     },
     error: err => {
       console.log('Update failed, showing error:', err);
